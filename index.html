@@ -701,7 +701,7 @@
 
   // Fetch exactly 10 of the other videos from the playlist
   async function fetchOtherVideosFromPlaylist(playlistId) {
-    const cacheKey = getCacheKey('other', playlistId, '19');
+    const cacheKey = getCacheKey('other', playlistId, '47');
     const cachedItems = getLocalCache(cacheKey);
     if (cachedItems) {
       displayOtherVideos(cachedItems);
@@ -709,7 +709,7 @@
     }
     
     try {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=19`;
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=47`;
       const response = await fetch(url);
       const data = await response.json();
       console.log('Other Videos from Playlist Response:', data);
@@ -728,48 +728,57 @@
 
   // Display the other videos
   async function displayOtherVideos(videos) {
-  const otherVideosContainer = document.getElementById('other-videos');
-  otherVideosContainer.innerHTML = '';
-  
-  // Get all video IDs from the fetched playlist items.
-  const videoIds = videos.map(video => video.contentDetails.videoId).join(',');
-  
-  try {
-    // Fetch video details (specifically contentDetails for duration) for all IDs in one call.
-    const durationResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`);
-    const durationData = await durationResponse.json();
-    
-    // Create a mapping from videoId to duration in seconds.
-    const durationMap = {};
-    durationData.items.forEach(item => {
-      const seconds = isoDurationToSeconds(item.contentDetails.duration);
-      durationMap[item.id] = seconds;
-    });
-    
-    // Now loop over the original videos and only display those that are 60 seconds or longer.
-    videos.forEach(video => {
-      const vidId = video.contentDetails.videoId;
-      const duration = durationMap[vidId];
-      if (duration < 185) {
-        // Skip videos under 60 seconds.
-        return;
-      }
-      otherVideosContainer.innerHTML += `
-        <a class="video-card-link" href="https://www.youtube.com/watch?v=${vidId}" target="_blank">
-          <div class="video-card">
-            <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-            <div class="info">
-              <h3 style="padding-left: 10px;">${video.snippet.title}</h3>
+    const otherVideosContainer = document.getElementById('other-videos');
+    otherVideosContainer.innerHTML = '';
+
+    // Get IDs of all videos
+    const videoIds = videos.map(video => video.contentDetails.videoId).join(',');
+
+    try {
+      // Fetch durations for all items in a batch
+      const durationResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`);
+      const durationData = await durationResponse.json();
+      
+      // Build map of videoId => duration (in seconds)
+      const durationMap = {};
+      durationData.items.forEach(item => {
+        durationMap[item.id] = isoDurationToSeconds(item.contentDetails.duration);
+      });
+      
+      // Filter out videos under 60 sec and the newest video if needed (assuming currentNewestVideoId is set)
+      const filtered = videos.filter(video => {
+        const vidId = video.contentDetails.videoId;
+        const duration = durationMap[vidId];
+        // Return false if duration is under 60 sec, true otherwise.
+        // Also filter out the newest video if that is desired:
+        return duration >= 185 && vidId !== currentNewestVideoId;
+      });
+
+      // Ensure that you only display the first 12 videos after filtering.
+      const desiredCount = 12;
+      const videosToDisplay = filtered.slice(0, desiredCount);
+      
+      videosToDisplay.forEach(video => {
+        const vidId = video.contentDetails.videoId;
+        otherVideosContainer.innerHTML += `
+          <a class="video-card-link" href="https://www.youtube.com/watch?v=${vidId}" target="_blank">
+            <div class="video-card">
+              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
+              <div class="info">
+                <h3 style="padding-left: 10px;">${video.snippet.title}</h3>
+                <p>${video.snippet.description.substring(0, 100)}...</p>
+              </div>
             </div>
-          </div>
-        </a>
-      `;
-    });
-  } catch (error) {
-    console.error('Error fetching video durations:', error);
-    otherVideosContainer.innerHTML = '<p>Error loading videos.</p>';
+          </a>
+        `;
+      });
+
+    } catch (error) {
+      console.error('Error fetching video durations:', error);
+      otherVideosContainer.innerHTML = '<p>Error loading videos.</p>';
+    }
   }
-}
+
 
 
 function isoDurationToSeconds(isoDuration) {
