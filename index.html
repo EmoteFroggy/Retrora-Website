@@ -792,14 +792,24 @@ function isoDurationToSeconds(isoDuration) {
 
   // Switch the channel
   function switchChannel(direction) {
-    currentChannelIndex = (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
-    const channelName = CHANNEL_NAMES[currentChannelIndex];
-    const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
+  currentChannelIndex = (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
+  const channelName = CHANNEL_NAMES[currentChannelIndex];
+  const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
 
-    document.getElementById('channel-name').textContent = `Newest Video from ${channelName}`;
-    fetchNewestVideoFromPlaylist(playlistId, 'newest-video');
-    fetchOtherVideosFromPlaylist(playlistId);
+  document.getElementById('channel-name').textContent = `Newest Video from ${channelName}`;
+  fetchNewestVideoFromPlaylist(playlistId, 'newest-video');
+  fetchOtherVideosFromPlaylist(playlistId);
+
+  // If there are only two channels:
+  if (currentChannelIndex === 0) {
+    document.getElementById('left-arrow').style.display = 'none';
+    document.getElementById('right-arrow').style.display = 'block';
+  } else if (currentChannelIndex === 1) {
+    document.getElementById('left-arrow').style.display = 'block';
+    document.getElementById('right-arrow').style.display = 'none';
   }
+}
+
 
   // Switch channel when page loads
   switchChannel(0);
