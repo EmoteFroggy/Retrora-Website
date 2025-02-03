@@ -593,129 +593,195 @@
 
 
 <script>
-  const API_KEY = 'AIzaSyDzjkseEXYMO0LV2wn1bxbQmZ9ylu2cbSw';
+  const API_KEY = 'AIzaSyB1N_HW6LbcI4WsFANVIEX-wP3CL3mtDU0';
   const CHANNEL_IDS = ['UC0JqWDXiBBaw7_-aL6DByHw', 'UCXJyOrMtXJxGwv1x_tH4MYA'];
   const CHANNEL_NAMES = ['Retrora & Co.', 'Retrora Live'];
   let currentChannelIndex = 0;
-  let currentPageToken = null;
-  let nextPageTokens = [null, null];
-  let prevPageTokens = [null, null];
+  // Using the uploads playlist (cheaper endpoint)
+  const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map(id => 'UU' + id.slice(2));
+  
+  // Define expiration time for cache (in milliseconds)
+  const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+  
+  // In‑memory cache as a fallback
   let cachedData = {};
 
-  async function fetchNewestVideo(channelId, elementId) {
+  // Helper functions for localStorage caching
+  function getCacheKey(type, playlistId, additional = '10') {
+    return `${type}_${playlistId}_${additional}`;
+  }
+
+  function setLocalCache(key, data) {
+    const cacheObject = {
+      timestamp: Date.now(),
+      data: data,
+    };
+    localStorage.setItem(key, JSON.stringify(cacheObject));
+    // Also update our in-memory cache
+    cachedData[key] = cacheObject;
+  }
+
+  function getLocalCache(key) {
+    // Check in-memory first
+    if (cachedData[key]) {
+      if (Date.now() - cachedData[key].timestamp < CACHE_EXPIRY_MS) {
+        return cachedData[key].data;
+      }
+      // Expired: remove from in-memory and localStorage
+      delete cachedData[key];
+      localStorage.removeItem(key);
+      return null;
+    }
+    // Look in localStorage if not in memory
+    const item = localStorage.getItem(key);
+    if (!item) return null;
     try {
-      if (cachedData[channelId] && cachedData[channelId].newestVideo) {
-        const video = cachedData[channelId].newestVideo;
-        document.getElementById(elementId).innerHTML = `
-          <iframe src="https://www.youtube.com/embed/${video.id.videoId}" allowfullscreen></iframe>
-        `;
-        return;
-      }
-
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channelId}&part=snippet,id&order=date&maxResults=1`);
-      const data = await response.json();
-      console.log('Newest Video Response:', data);
-
-      if (data.items && data.items.length > 0) {
-        const video = data.items[0];
-        document.getElementById(elementId).innerHTML = `
-          <iframe src="https://www.youtube.com/embed/${video.id.videoId}" allowfullscreen></iframe>
-        `;
-        if (!cachedData[channelId]) {
-          cachedData[channelId] = {};
-        }
-        cachedData[channelId].newestVideo = video;
+      const cacheObject = JSON.parse(item);
+      // Check if expired
+      if (Date.now() - cacheObject.timestamp < CACHE_EXPIRY_MS) {
+        // Update in-memory cache
+        cachedData[key] = cacheObject;
+        return cacheObject.data;
       } else {
-        console.log('No videos found for channel:', channelId);
-        document.getElementById(elementId).innerHTML = '<p>No videos available.</p>';
+        // Expired
+        localStorage.removeItem(key);
+        return null;
       }
-    } catch (error) {
-      console.error('Error fetching newest video:', error);
-      document.getElementById(elementId).innerHTML = '<p>Error loading video.</p>';
+    } catch (e) {
+      console.error("Error reading cache", e);
+      localStorage.removeItem(key);
+      return null;
     }
   }
 
-  async function fetchOtherVideos(channelId, pageToken = null) {
+  // Fetch the newest video in a playlist (for main video display)
+  async function fetchNewestVideoFromPlaylist(playlistId, elementId) {
+  const cacheKey = getCacheKey('newest', playlistId, '1');
+  const cached = getLocalCache(cacheKey);
+  if (cached) {
+    currentNewestVideoId = cached[0].contentDetails.videoId;
+    document.getElementById(elementId).innerHTML = `
+      <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
+    `;
+    return;
+  }
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=1`;
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log('Newest Video from Playlist Response:', data);
+    if (data.items && data.items.length > 0) {
+      currentNewestVideoId = data.items[0].contentDetails.videoId;
+      document.getElementById(elementId).innerHTML = `
+        <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
+      `;
+      setLocalCache(cacheKey, data.items);
+    } else {
+      document.getElementById(elementId).innerHTML = '<p>No videos available.</p>';
+    }
+  } catch (error) {
+    console.error('Error fetching newest video from playlist:', error);
+    document.getElementById(elementId).innerHTML = '<p>Error loading video.</p>';
+  }
+}
+
+  // Fetch exactly 10 of the other videos from the playlist
+  async function fetchOtherVideosFromPlaylist(playlistId) {
+    const cacheKey = getCacheKey('other', playlistId, '19');
+    const cachedItems = getLocalCache(cacheKey);
+    if (cachedItems) {
+      displayOtherVideos(cachedItems);
+      return;
+    }
+    
     try {
-      const cacheKey = `${channelId}_${pageToken || 'initial'}`;
-      if (cachedData[channelId] && cachedData[channelId][cacheKey]) {
-        const videos = cachedData[channelId][cacheKey];
-        const otherVideosContainer = document.getElementById('other-videos');
-        otherVideosContainer.innerHTML = '';
-        videos.forEach(video => {
-          otherVideosContainer.innerHTML += `
-            <div class="video-card">
-              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-              <div class="info">
-                <h3>${video.snippet.title}</h3>
-                <p>${video.snippet.description.substring(0, 100)}...</p>
-              </div>
-            </div>
-          `;
-        });
-        document.getElementById('load-more-left').style.display = prevPageTokens[currentChannelIndex] ? 'block' : 'none';
-        document.getElementById('load-more-right').style.display = nextPageTokens[currentChannelIndex] ? 'block' : 'none';
-        return;
-      }
-
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${channelId}&part=snippet,id&order=date&maxResults=16&pageToken=${pageToken || ''}`);
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=19`;
+      const response = await fetch(url);
       const data = await response.json();
-      console.log('Other Videos Response:', data);
-
-      nextPageTokens[currentChannelIndex] = data.nextPageToken;
-      prevPageTokens[currentChannelIndex] = data.prevPageToken;
-
+      console.log('Other Videos from Playlist Response:', data);
+      
       if (data.items && data.items.length > 0) {
-        const otherVideosContainer = document.getElementById('other-videos');
-        otherVideosContainer.innerHTML = '';
-        data.items.forEach(video => {
-          otherVideosContainer.innerHTML += `
-            <a class="video-card-link" href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">
-              <div class="video-card">
-                <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-                <div class="info">
-                  <h3>${video.snippet.title}</h3>
-                </div>
-              </div>
-            </a>
-          `;
-        });
-
-        if (!cachedData[channelId]) {
-          cachedData[channelId] = {};
-        }
-        cachedData[channelId][cacheKey] = data.items;
+        setLocalCache(cacheKey, data.items);
+        displayOtherVideos(data.items);
       } else {
-        console.log('No videos found.');
         document.getElementById('other-videos').innerHTML = '<p>No videos available.</p>';
       }
     } catch (error) {
-      console.error('Error fetching other videos:', error);
+      console.error('Error fetching other videos from playlist:', error);
       document.getElementById('other-videos').innerHTML = '<p>Error loading videos.</p>';
     }
   }
 
+  // Display the other videos
+  async function displayOtherVideos(videos) {
+  const otherVideosContainer = document.getElementById('other-videos');
+  otherVideosContainer.innerHTML = '';
+  
+  // Get all video IDs from the fetched playlist items.
+  const videoIds = videos.map(video => video.contentDetails.videoId).join(',');
+  
+  try {
+    // Fetch video details (specifically contentDetails for duration) for all IDs in one call.
+    const durationResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`);
+    const durationData = await durationResponse.json();
+    
+    // Create a mapping from videoId to duration in seconds.
+    const durationMap = {};
+    durationData.items.forEach(item => {
+      const seconds = isoDurationToSeconds(item.contentDetails.duration);
+      durationMap[item.id] = seconds;
+    });
+    
+    // Now loop over the original videos and only display those that are 60 seconds or longer.
+    videos.forEach(video => {
+      const vidId = video.contentDetails.videoId;
+      const duration = durationMap[vidId];
+      if (duration < 185) {
+        // Skip videos under 60 seconds.
+        return;
+      }
+      otherVideosContainer.innerHTML += `
+        <a class="video-card-link" href="https://www.youtube.com/watch?v=${vidId}" target="_blank">
+          <div class="video-card">
+            <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
+            <div class="info">
+              <h3 style="padding-left: 10px;">${video.snippet.title}</h3>
+            </div>
+          </div>
+        </a>
+      `;
+    });
+  } catch (error) {
+    console.error('Error fetching video durations:', error);
+    otherVideosContainer.innerHTML = '<p>Error loading videos.</p>';
+  }
+}
+
+
+function isoDurationToSeconds(isoDuration) {
+  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const matches = isoDuration.match(regex);
+  const hours = parseInt(matches[1] || "0", 10);
+  const minutes = parseInt(matches[2] || "0", 10);
+  const seconds = parseInt(matches[3] || "0", 10);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+  // Switch the channel
   function switchChannel(direction) {
     currentChannelIndex = (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
-    const channelId = CHANNEL_IDS[currentChannelIndex];
     const channelName = CHANNEL_NAMES[currentChannelIndex];
+    const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
 
     document.getElementById('channel-name').textContent = `Newest Video from ${channelName}`;
-    fetchNewestVideo(channelId, 'newest-video');
-    fetchOtherVideos(channelId);
-
-    document.getElementById('left-arrow').style.display = currentChannelIndex === 0 ? 'none' : 'block';
-    document.getElementById('right-arrow').style.display = currentChannelIndex === CHANNEL_IDS.length - 1 ? 'none' : 'block';
+    fetchNewestVideoFromPlaylist(playlistId, 'newest-video');
+    fetchOtherVideosFromPlaylist(playlistId);
   }
 
-  function loadMoreVideos(direction) {
-    const channelId = CHANNEL_IDS[currentChannelIndex];
-    const tokenToUse = direction === 1 ? nextPageTokens[currentChannelIndex] : prevPageTokens[currentChannelIndex];
-    fetchOtherVideos(channelId, tokenToUse);
-  }
-
-  // Initialize with the first channel
+  // Switch channel when page loads
   switchChannel(0);
 </script>
+
+
 </body>
 </html>
