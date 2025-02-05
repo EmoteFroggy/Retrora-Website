@@ -1,0 +1,329 @@
+/* Reset & Global Styles */
+
+@font-face {
+    font-family: 'crosswindsnowind';
+    src: url('fonts/crosswinds-nowind-webfont.woff2') format('woff2'),
+         url('fonts/crosswinds-nowind-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'crosswindsnowind';
+    background: linear-gradient(135deg, #111 0%, #222 50%, #111 100%);
+    color: #eee;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+    padding-top: 200px;
+  }
+  
+  a {
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  a:hover {
+    color: #ffa0b0;
+  }
+  
+  /* Header */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 10, 1);
+    padding: 10px 0;
+    z-index: 1002;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  }
+  
+  header h1 {
+    font-family: "crosswindsnowind", cursive;
+    font-size: 1.5em;
+    color: #ff688c;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  
+  /* Social Links Container */
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 0 10px;
+  }
+  
+  .social-button {
+    width: 70px;
+    height: 70px;
+    background: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px #ff688c;
+    transition: transform 0.3s, box-shadow 0.3s;
+    color: #ff688c;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .social-button i {
+    font-size: 2.5em;
+  }
+  
+  .social-button::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    background: rgba(255, 104, 140, 0.3);
+    border-radius: 50%;
+    transition: width 0.3s, height 0.3s;
+  }
+  
+  .social-button:hover::before {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .social-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px #ff688c;
+  }
+  
+  .social-button.bluesky svg {
+    width: 60%;
+    height: auto;
+    fill: #ff688c;
+  }
+  
+  /* Container for page content with particle background */
+  .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 100px auto 20px;
+    position: relative;
+  }
+
+  
+  /* Newest Video Section */
+  .newest-video {
+    position: relative;
+    background: rgba(20, 20, 20, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    box-shadow: 0 0 10px #ff688c;
+  }
+  
+  .newest-video h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: #ff688c;
+  }
+  
+  .video-player-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+  }
+  
+  .goku-image {
+    position: absolute;
+    transform: scaleX(-1);
+    bottom: -40px;
+    left: -350px;
+    right: -700;
+    width: 350px;
+    height: auto;
+    pointer-events: none;
+  }
+  
+  .gohan-image {
+    position: absolute;
+    bottom: -40px;
+    left: 1000px;
+    width: 550px;
+    height: auto;
+    pointer-events: none;
+  }
+
+  .Logo {
+    position: fixed;
+    bottom: 650px;
+    left: 885px;
+    width: 140px;
+    height: auto;
+    pointer-events: none;
+  }
+  
+  .video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  
+  .video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 10px;
+  }
+  
+  .arrow-buttons {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    max-width: 800px;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .arrow-button {
+    background: #000;
+    border: none;
+    color: #ff688c;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px #ff688c;
+    position: absolute;
+    top: 40%;
+  }
+  
+  #left-arrow {
+    left: -125px;
+  }
+  
+  #right-arrow {
+    right: -125px;
+  }
+  
+  .arrow-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px #ff688c;
+  }
+  
+  .arrow-button svg {
+    width: 100%;
+    height: auto;
+    fill: #ff688c;
+  }
+  
+  .other-videos h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: #ff688c;
+  }
+  
+  .video-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  
+  .video-card {
+    width: 280px;
+    height: 230px;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 10px #ff688c;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .video-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px #ff688c;
+  }
+  
+  .video-card img {
+    width: 100%;
+    height: 158px;
+    object-fit: cover;
+  }
+  
+  .video-card:hover img {
+    transform: scale(1.05);
+  }
+  
+  .video-card .info h3 {
+    margin-bottom: 10px;
+    margin-left: 0px;
+    font-size: 15px;
+    color: #ff688c;
+  }
+  
+  .video-card .info p {
+    font-size: 0.9em;
+    color: #ccc;
+  }
+  
+  footer {
+    text-align: center;
+    padding: 20px;
+    background: #1a1a1a;
+    margin-top: 40px;
+    font-size: 0.8em;
+  }
+
+
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    background: linear-gradient(
+        to bottom right,
+        #1a0a12,
+        #2a0a1d,
+        #1a0a12,
+        #1a0a12,
+        #1a0a12,
+        #1a0a12
+    );
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.content {
+    position: relative;
+    z-index: 2;
+    color: white;
+    padding: 2rem;
+}
