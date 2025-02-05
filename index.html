@@ -19,412 +19,14 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       crossorigin="anonymous"
     />
-    <style>
-      /* Reset & Global Styles */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Press Start 2P", cursive;
-        background: linear-gradient(135deg, #111 0%, #222 50%, #111 100%);
-        color: #eee;
-        line-height: 1.6;
-        overflow-x: hidden;
-        position: relative;
-        padding-top: 80px;
-      }
-
-      a {
-        text-decoration: none;
-        transition: color 0.3s;
-      }
-
-      a:hover {
-        color: #ffa0b0;
-      }
-
-      /* Header */
-      header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: rgba(10, 10, 10, 1);
-        padding: 10px 0;
-        z-index: 1002;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-      }
-
-      header h1 {
-        font-family: "Press Start 2P", cursive;
-        font-size: 1.5em;
-        color: #ff688c;
-        text-align: center;
-        margin-bottom: 5px;
-      }
-
-      /* Social Links Container */
-      .social-links {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        padding: 0 10px;
-      }
-
-      .social-button {
-        width: 45px;
-        height: 45px;
-        background: #000;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 10px #ff688c;
-        transition: transform 0.3s, box-shadow 0.3s;
-        color: #ff688c;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .social-button::before {
-        content: "";
-        position: absolute;
-        width: 0;
-        height: 0;
-        background: rgba(255, 104, 140, 0.3);
-        border-radius: 50%;
-        transition: width 0.3s, height 0.3s;
-      }
-
-      .social-button:hover::before {
-        width: 100%;
-        height: 100%;
-      }
-
-      .social-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 15px #ff688c;
-      }
-
-      .social-button.bluesky svg {
-        width: 60%;
-        height: auto;
-        fill: #ff688c;
-      }
-
-      /* Container for page content with a subtle particle background */
-      .container {
-        width: 90%;
-        max-width: 1200px;
-        margin: 100px auto 20px;
-        position: relative;
-      }
-
-      .container::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 150%;
-        height: 100%;
-        background-image: radial-gradient(
-          rgba(255, 255, 255, 0.1) 1px,
-          transparent 1px
-        );
-        background-size: 50px 50px;
-        opacity: 0.2;
-        pointer-events: none;
-        animation: moveParticles 20s linear infinite;
-      }
-
-      @keyframes moveParticles {
-        from {
-          transform: translate(0, 0);
-        }
-        to {
-          transform: translate(-50px, -50px);
-        }
-      }
-
-      /* DBZ-Inspired Energy Glow */
-      .energy-glow {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(
-          circle,
-          rgba(255, 104, 140, 0.2) 0%,
-          transparent 70%
-        );
-        mix-blend-mode: screen;
-        pointer-events: none;
-        animation: pulse 3s infinite;
-        border-radius: inherit;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 0.8;
-        }
-        50% {
-          opacity: 1;
-        }
-      }
-
-      /* Newest Video Section */
-      .newest-video {
-        position: relative;
-        background: rgba(20, 20, 20, 0.95);
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 40px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-      }
-
-      .newest-video h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 1.5em;
-        color: #ff688c;
-      }
-
-      .video-player-container {
-        position: relative;
-        width: 100%;
-        max-width: 800px;
-        margin: auto;
-      }
-      .goku-image {
-        position: absolute;
-        bottom: -50px;  /* adjust to place it just outside the video player container */
-        left: -450px;
-        right: -700;       /* or adjust as required */
-        width: 450px;    /* Make it smaller, adjust as needed */
-        height: auto;
-        pointer-events: none; /* so it doesn't block other elements */
-      }
-      .gohan-image {
-        position: absolute;
-        bottom: 20px;  /* adjust to place it just outside the video player container */
-        left: 1100px;
-        right: -700;       /* or adjust as required */
-        width: 550px;    /* Make it smaller, adjust as needed */
-        height: auto;
-        pointer-events: none; /* so it doesn't block other elements */
-      }
-
-      .video-wrapper {
-        position: relative;
-        padding-bottom: 56.25%;
-        height: 0;
-        overflow: hidden;
-        border-radius: 10px;
-      }
-
-      .video-wrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-        border-radius: 10px;
-      }
-
-      .arrow-buttons {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 100%;
-        max-width: 800px;
-        padding: 0 20px;
-        display: flex;
-        justify-content: space-between;
-      }
-
-      .arrow-button {
-        background: #000;
-        border: none;
-        color: #ff688c;
-        padding: 25px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: transform 0.3s, box-shadow 0.3s;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 10px #ff688c;
-        position: absolute;
-        top: 40%;
-      }
-
-      .arrow-button#left-arrow {
-        left: -125px;
-      }
-
-      .arrow-button#right-arrow {
-        right: -125px;
-      }
-
-      .arrow-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 15px #ff688c;
-      }
-
-      .arrow-button svg {
-        width: 100%;
-        height: auto;
-        fill: #ff688c;
-      }
-
-      @keyframes glow-pink {
-        0% {
-          color: #ff69b4;
-        }
-        100% {
-          color: #ffc0cb;
-        }
-      }
-
-      /* Optional: A simple slide-in animation */
-      @keyframes slideIn {
-        from {
-          left: -150px;
-          opacity: 0;
-        }
-        to {
-          left: 0;
-          opacity: 1;
-        }
-      }
-
-      /* Twitch Button Hover Effect */
-      .social-button.twitch-button {
-        position: relative;
-        width: 45px;
-        height: 45px;
-        background: #000;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 10px #ff688c;
-        transition: transform 0.3s, box-shadow 0.3s, width 0.3s,
-          height 0.3s;
-        color: #ff688c;
-        margin-left: 10px;
-        overflow: hidden;
-      }
-
-      .social-button.twitch-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 15px #ff688c;
-        width: 120px;
-        height: 45px;
-        border-radius: 25px;
-        justify-content: flex-start;
-        padding-left: 10px;
-      }
-
-      .social-button.twitch-button:hover .hover-text {
-        opacity: 1;
-        margin-left: -20px;
-      }
-
-      .social-button.twitch-button .hover-text {
-        position: absolute;
-        left: 60px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1em;
-        color: #ff688c;
-        opacity: 0;
-        transition: opacity 0.3s, margin-left 0.3s;
-        white-space: nowrap;
-      }
-
-      /* Other Videos Section */
-      .other-videos h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 1.5em;
-        color: #ff688c;
-      }
-
-      .video-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-      }
-
-      .video-card {
-          width: 280px;
-          /* Fix a height that works for your design */
-          height: 230px;
-          background: rgba(30, 30, 30, 0.9);
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 0 10px #FF688C;
-          transition: transform 0.3s, box-shadow 0.3s;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-        }
-
-      .video-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 15px #FF688C; /* Increase glow on hover */
-      }
-
-      .video-card img {
-        width: 100%;
-        /* Fix the image height for uniformity */
-        height: 158px;    /* For a 16:9 ratio, use 280px * (9/16) ≈ 157.5px */
-        object-fit: cover;
-      }
-
-      .video-card:hover img {
-        transform: scale(1.05);
-      }
-
-      .video-card .info h3 {
-        font-size: 1.1em;
-        margin-bottom: 10px;
-        margin-left: 15px;
-        font-size: 13px;
-        color: #ff688c;
-      }
-
-      .video-card .info p {
-        font-size: 0.9em;
-        color: #ccc;
-      }
-
-      /* Footer */
-      footer {
-        text-align: center;
-        padding: 20px;
-        background: #1a1a1a;
-        margin-top: 40px;
-        font-size: 0.8em;
-      }
-    </style>
+    <!-- Link your external CSS file -->
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <!-- Header with Social Media Buttons -->
     <header>
       <h1>Retrora & Co.</h1>
+      <h2></h2>
       <div class="social-links">
         <!-- Twitch -->
         <a
@@ -507,7 +109,7 @@
         >
           <i class="fab fa-steam fa-lg"></i>
         </a>
-        <!-- Bluesky (using SVG icon) -->
+        <!-- Bluesky -->
         <a
           href="https://bsky.app/profile/retrora.bsky.social"
           target="_blank"
@@ -533,288 +135,88 @@
     </header>
 
     <!-- Main Content -->
-<!-- Main Content -->
-<div class="container">
-  <!-- Newest Video Section -->
-  <section class="newest-video">
-    <div class="energy-glow"></div>
-    <h2 id="channel-name">Newest Video</h2>
-    <div class="video-player-container">
-      <button
-        class="arrow-button"
-        onclick="switchChannel(-1)"
-        id="left-arrow"
-        style="display: none;"
+    <div class="container">
+      <img
+        class="Logo"
+        src="https://gachi.gay/Fn4O3"
+        alt="Gachi"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path
-            d="M13.7,8.3c-0.4-0.4-1-0.4-1.4,0l-3,3c-0.4,0.4-0.4,1,0,1.4l3,3c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3
-            c0.4-0.4,0.4-1,0-1.4L11.4,12l2.3-2.3C14.1,9.3,14.1,8.7,13.7,8.3z"
-          />
-        </svg>
-      </button>
-      <div class="video-wrapper" id="newest-video">
-        <!-- Newest video iframe will be injected here -->
-      </div>
-      <button
-        class="arrow-button"
-        onclick="switchChannel(1)"
-        id="right-arrow"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path
-            d="M10.3,15.7c0.4,0.4,1,0.4,1.4,0l3-3c0.4-0.4,0.4-1,0-1.4l-3-3c-0.2-0.2-0.5-0.3-0.7-0.3s-0.5,0.1-0.7,0.3
-            C9.9,9.3,9.9,9.7,10.3,10.1L12.6,12l-2.3,2.3C9.9,14.7,9.9,15.3,10.3,15.7z"
-          />
-        </svg>
-      </button>
-    </div>
-  </section>
-  <img
-        src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/98637334-bc41-40b8-bd54-1ddc2fff5661/dh30yim-f9d07b93-36f0-4806-8133-2ba548de1c08.png/v1/fit/w_544,h_1108/goku_manga_png__redraw_and_recolor_by_me__by_drzackedit_dh30yim-375w-2x.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTEwOCIsInBhdGgiOiJcL2ZcLzk4NjM3MzM0LWJjNDEtNDBiOC1iZDU0LTFkZGMyZmZmNTY2MVwvZGgzMHlpbS1mOWQwN2I5My0zNmYwLTQ4MDYtODEzMy0yYmE1NDhkZTFjMDgucG5nIiwid2lkdGgiOiI8PTU0NCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.z0ywrvH_xBKMjHLBivjDBBeJoqDQXxBEEk3xleGuwnA"
+      <!-- Newest Video Section -->
+      <section class="newest-video">
+        <div class="energy-glow"></div>
+        <h2 id="channel-name">Newest Video</h2>
+        <div class="video-player-container">
+          <button
+            class="arrow-button"
+            onclick="switchChannel(-1)"
+            id="left-arrow"
+            style="display: none;"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M13.7,8.3c-0.4-0.4-1-0.4-1.4,0l-3,3c-0.4,0.4-0.4,1,0,1.4l3,3c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3
+                c0.4-0.4,0.4-1,0-1.4L11.4,12l2.3-2.3C14.1,9.3,14.1,8.7,13.7,8.3z"
+              />
+            </svg>
+          </button>
+          <div class="video-wrapper" id="newest-video">
+            <!-- Newest video iframe will be injected here -->
+          </div>
+          <button
+            class="arrow-button"
+            onclick="switchChannel(1)"
+            id="right-arrow"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M10.3,15.7c0.4,0.4,1,0.4,1.4,0l3-3c0.4-0.4,0.4-1,0-1.4l-3-3c-0.2-0.2-0.5-0.3-0.7-0.3s-0.5,0.1-0.7,0.3
+                C9.9,9.3,9.9,9.7,10.3,10.1L12.6,12l-2.3,2.3C9.9,14.7,9.9,15.3,10.3,15.7z"
+              />
+            </svg>
+          </button>
+        </div>
+      </section>
+      <img
+        src="https://cdn.discordapp.com/attachments/850412067920150528/1336244524908941355/IMG_5262.png?ex=67a31a30&is=67a1c8b0&hm=d88a6e7c067281b54a9bd0f957cd848bcd4a6ac2d293aa099e3315bd59d51267&"
         alt="Goku Manga"
         class="goku-image"
       >
-      <img 
-        class="gohan-image" 
-        src="https://gachi.gay/Vzb8o" 
+      <img
+        class="gohan-image"
+        src="https://cdn.discordapp.com/attachments/850412067920150528/1336244524397105237/Wave_Transparent.png?ex=67a31a30&is=67a1c8b0&hm=6f983aff0213d4dbc63ced8eea3fedac245aa1da514055ae52ed1f1cacbd253f&"
         alt="Gachi"
       >
-  <!-- Other Videos Section -->
-  <section class="other-videos">
-    <h2>Other Videos</h2>
-    <div class="video-list" id="other-videos">
-      <!-- Additional video cards will be injected here -->
+      <!-- Other Videos Section -->
+      <section class="other-videos">
+        <h2>OTHER VIDEOS</h2>
+        <div class="video-list" id="other-videos">
+          <!-- Additional video cards will be injected here -->
+        </div>
+      </section>
     </div>
-  </section>
-</div>
 
-<footer
-  style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 20px;"
->
-  <!-- Left empty cell -->
-  <div></div>
-  <!-- Centered Text -->
-  <p style="grid-column: 2; text-align: center; margin: 0;">
-    uhhh balls
-  </p>
-  <!-- Right-aligned Image -->
-  <img
-    src="https://cdn.7tv.app/emote/01FDN968X80006SC5NBG2SYP3A/4x.avif"
-    alt="Footer Emote"
-    style="grid-column: 3; justify-self: end; width: 50px;"
-  />
-</footer>
+    <footer
+      style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 20px;"
+    >
+      <!-- Left empty cell -->
+      <div></div>
+      <!-- Centered Text -->
+      <p style="grid-column: 2; text-align: center; margin: 0;">
+        Made with ‪‪❤︎‬ by EmoteFroggy
+      </p>
+      <!-- Right-aligned Image -->
+    </footer>
 
-
-<script>
-  const API_KEY = 'AIzaSyB1N_HW6LbcI4WsFANVIEX-wP3CL3mtDU0';
-  const CHANNEL_IDS = ['UC0JqWDXiBBaw7_-aL6DByHw', 'UCXJyOrMtXJxGwv1x_tH4MYA'];
-  const CHANNEL_NAMES = ['Retrora & Co.', 'Retrora Live'];
-  let currentChannelIndex = 0;
-  // Using the uploads playlist (cheaper endpoint)
-  const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map(id => 'UU' + id.slice(2));
-  
-  // Define expiration time for cache (in milliseconds)
-  const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
-  
-  // In‑memory cache as a fallback
-  let cachedData = {};
-
-  // Helper functions for localStorage caching
-  function getCacheKey(type, playlistId, additional = '10') {
-    return `${type}_${playlistId}_${additional}`;
-  }
-
-  function setLocalCache(key, data) {
-    const cacheObject = {
-      timestamp: Date.now(),
-      data: data,
-    };
-    localStorage.setItem(key, JSON.stringify(cacheObject));
-    // Also update our in-memory cache
-    cachedData[key] = cacheObject;
-  }
-
-  function getLocalCache(key) {
-    // Check in-memory first
-    if (cachedData[key]) {
-      if (Date.now() - cachedData[key].timestamp < CACHE_EXPIRY_MS) {
-        return cachedData[key].data;
-      }
-      // Expired: remove from in-memory and localStorage
-      delete cachedData[key];
-      localStorage.removeItem(key);
-      return null;
-    }
-    // Look in localStorage if not in memory
-    const item = localStorage.getItem(key);
-    if (!item) return null;
-    try {
-      const cacheObject = JSON.parse(item);
-      // Check if expired
-      if (Date.now() - cacheObject.timestamp < CACHE_EXPIRY_MS) {
-        // Update in-memory cache
-        cachedData[key] = cacheObject;
-        return cacheObject.data;
-      } else {
-        // Expired
-        localStorage.removeItem(key);
-        return null;
-      }
-    } catch (e) {
-      console.error("Error reading cache", e);
-      localStorage.removeItem(key);
-      return null;
-    }
-  }
-
-  // Fetch the newest video in a playlist (for main video display)
-  async function fetchNewestVideoFromPlaylist(playlistId, elementId) {
-  const cacheKey = getCacheKey('newest', playlistId, '1');
-  const cached = getLocalCache(cacheKey);
-  if (cached) {
-    currentNewestVideoId = cached[0].contentDetails.videoId;
-    document.getElementById(elementId).innerHTML = `
-      <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
-    `;
-    return;
-  }
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=1`;
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log('Newest Video from Playlist Response:', data);
-    if (data.items && data.items.length > 0) {
-      currentNewestVideoId = data.items[0].contentDetails.videoId;
-      document.getElementById(elementId).innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
-      `;
-      setLocalCache(cacheKey, data.items);
-    } else {
-      document.getElementById(elementId).innerHTML = '<p>No videos available.</p>';
-    }
-  } catch (error) {
-    console.error('Error fetching newest video from playlist:', error);
-    document.getElementById(elementId).innerHTML = '<p>Error loading video.</p>';
-  }
-}
-
-  // Fetch exactly 10 of the other videos from the playlist
-  async function fetchOtherVideosFromPlaylist(playlistId) {
-    const cacheKey = getCacheKey('other', playlistId, '47');
-    const cachedItems = getLocalCache(cacheKey);
-    if (cachedItems) {
-      displayOtherVideos(cachedItems);
-      return;
-    }
-    
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=47`;
-      const response = await fetch(url);
-      const data = await response.json();
-      console.log('Other Videos from Playlist Response:', data);
-      
-      if (data.items && data.items.length > 0) {
-        setLocalCache(cacheKey, data.items);
-        displayOtherVideos(data.items);
-      } else {
-        document.getElementById('other-videos').innerHTML = '<p>No videos available.</p>';
-      }
-    } catch (error) {
-      console.error('Error fetching other videos from playlist:', error);
-      document.getElementById('other-videos').innerHTML = '<p>Error loading videos.</p>';
-    }
-  }
-
-  // Display the other videos
-  async function displayOtherVideos(videos) {
-    const otherVideosContainer = document.getElementById('other-videos');
-    otherVideosContainer.innerHTML = '';
-
-    // Get IDs of all videos
-    const videoIds = videos.map(video => video.contentDetails.videoId).join(',');
-
-    try {
-      // Fetch durations for all items in a batch
-      const durationResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`);
-      const durationData = await durationResponse.json();
-      
-      // Build map of videoId => duration (in seconds)
-      const durationMap = {};
-      durationData.items.forEach(item => {
-        durationMap[item.id] = isoDurationToSeconds(item.contentDetails.duration);
-      });
-      
-      // Filter out videos under 60 sec and the newest video if needed (assuming currentNewestVideoId is set)
-      const filtered = videos.filter(video => {
-        const vidId = video.contentDetails.videoId;
-        const duration = durationMap[vidId];
-        // Return false if duration is under 60 sec, true otherwise.
-        // Also filter out the newest video if that is desired:
-        return duration >= 185 && vidId !== currentNewestVideoId;
-      });
-
-      // Ensure that you only display the first 12 videos after filtering.
-      const desiredCount = 12;
-      const videosToDisplay = filtered.slice(0, desiredCount);
-      
-      videosToDisplay.forEach(video => {
-        const vidId = video.contentDetails.videoId;
-        otherVideosContainer.innerHTML += `
-          <a class="video-card-link" href="https://www.youtube.com/watch?v=${vidId}" target="_blank">
-            <div class="video-card">
-              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-              <div class="info">
-                <h3 style="padding-left: 10px;">${video.snippet.title}</h3>
-              </div>
-            </div>
-          </a>
-        `;
-      });
-
-    } catch (error) {
-      console.error('Error fetching video durations:', error);
-      otherVideosContainer.innerHTML = '<p>Error loading videos.</p>';
-    }
-  }
-
-
-
-function isoDurationToSeconds(isoDuration) {
-  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
-  const matches = isoDuration.match(regex);
-  const hours = parseInt(matches[1] || "0", 10);
-  const minutes = parseInt(matches[2] || "0", 10);
-  const seconds = parseInt(matches[3] || "0", 10);
-  return hours * 3600 + minutes * 60 + seconds;
-}
-
-  // Switch the channel
-  function switchChannel(direction) {
-  currentChannelIndex = (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
-  const channelName = CHANNEL_NAMES[currentChannelIndex];
-  const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
-
-  document.getElementById('channel-name').textContent = `Newest Video from ${channelName}`;
-  fetchNewestVideoFromPlaylist(playlistId, 'newest-video');
-  fetchOtherVideosFromPlaylist(playlistId);
-
-  // If there are only two channels:
-  if (currentChannelIndex === 0) {
-    document.getElementById('left-arrow').style.display = 'none';
-    document.getElementById('right-arrow').style.display = 'block';
-  } else if (currentChannelIndex === 1) {
-    document.getElementById('left-arrow').style.display = 'block';
-    document.getElementById('right-arrow').style.display = 'none';
-  }
-}
-
-
-  // Switch channel when page loads
-  switchChannel(0);
-</script>
-
-
-</body>
+    <!-- Link your external JavaScript file -->
+    <div id="nebula-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
