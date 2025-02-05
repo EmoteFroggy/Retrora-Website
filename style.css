@@ -149,6 +149,12 @@ header h1 {
   height: auto;
   fill: #ffffff;
 }
+.social-button.bluesky:hover svg {
+  width: 60%;
+  height: auto;
+  fill: #ffffff;
+  animation: pulse 1s infinite;
+}
 
 /* Container for page content with particle background */
 .container {
