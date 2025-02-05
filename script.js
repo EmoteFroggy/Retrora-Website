@@ -196,120 +196,156 @@ switchChannel(0);
 
 class NebulaParticles {
   constructor() {
-      this.initScene();
-      this.createParticles();
-      this.animate();
-      this.addEventListeners();
+    this.initScene();
+    this.createParticles();
+    this.animate();
+    this.addEventListeners();
   }
 
   initScene() {
-      // Scene setup
-      this.scene = new THREE.Scene();
-      
-      // Camera setup
-      this.camera = new THREE.OrthographicCamera(
-          window.innerWidth / -2,
-          window.innerWidth / 2,
-          window.innerHeight / 2,
-          window.innerHeight / -2,
-          -1000,
-          1000
-      );
-      this.camera.position.z = 50;
+    this.scene = new THREE.Scene();
 
-      // Renderer setup
-      this.renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          alpha: true,
-          logarithmicDepthBuffer: true
-      });
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(this.renderer.domElement);
+    this.camera = new THREE.OrthographicCamera(
+      window.innerWidth / -2,
+      window.innerWidth / 2,
+      window.innerHeight / 2,
+      window.innerHeight / -2,
+      -1000,
+      1000
+    );
+    this.camera.position.z = 50;
+
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      logarithmicDepthBuffer: true,
+    });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(this.renderer.domElement);
   }
 
   createParticles() {
-      const PARTICLE_COUNT = 25000;
-      const positions = new Float32Array(PARTICLE_COUNT * 3);
-      const colors = new Float32Array(PARTICLE_COUNT * 3);
-      const sizes = new Float32Array(PARTICLE_COUNT);
+    const PARTICLE_COUNT = 25000;
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 3);
+    const sizes = new Float32Array(PARTICLE_COUNT);
+    const opacity = new Float32Array(PARTICLE_COUNT);
 
-      const baseColor = new THREE.Color(0xFF688C);
-      const depthRange = 5;
+    const baseColor = new THREE.Color(0xff688c);
+    const depthRange = 5;
 
-      for(let i = 0; i < PARTICLE_COUNT; i++) {
-          positions[i*3] = (Math.random() - 0.5) * window.innerWidth * 2;
-          positions[i*3+1] = (Math.random() - 0.5) * window.innerHeight * 2;
-          positions[i*3+2] = -Math.random() * depthRange;
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * window.innerWidth * 2;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * window.innerHeight * 2;
+      positions[i * 3 + 2] = -Math.random() * depthRange;
 
-          const color = baseColor.clone();
-          color.offsetHSL(0, 0, (Math.random() - 0.5) * 0.1);
-          colors[i*3] = color.r;
-          colors[i*3+1] = color.g;
-          colors[i*3+2] = color.b;
+      const color = baseColor.clone();
+      color.offsetHSL(0, 0, (Math.random() - 0.5) * 0.1);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
 
-          // Adjusted size range for subtle variation
-          sizes[i] = 0.1 + Math.random() * 20.0;
-      }
+      // Initial size variation (smaller range)
+      sizes[i] = 2.0 + Math.random() * 3.0; // Reduced size range
+      opacity[i] = 1.0 + Math.random() * 2.0; // Higher opacity for visibility
+    }
 
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute("opacity", new THREE.BufferAttribute(opacity, 1));
 
-      this.material = new THREE.PointsMaterial({
-          size: 0.5,
-          vertexColors: true,
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-          sizeAttenuation: true
-      });
+    this.material = new THREE.ShaderMaterial({
+      uniforms: {
+        pointTexture: {
+          value: new THREE.TextureLoader().load(
+            "https://threejs.org/examples/textures/sprites/disc.png"
+          ),
+        },
+      },
+      vertexShader: `
+        attribute vec3 color;
+        attribute float size;
+        attribute float opacity;
+        varying float vOpacity;
+        varying vec3 vColor;
+        void main() {
+          vColor = color;
+          vOpacity = opacity;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size * (150.0 / -mvPosition.z); // Adjust size based on distance
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D pointTexture;
+        varying float vOpacity;
+        varying vec3 vColor;
+        void main() {
+          gl_FragColor = vec4(vColor, vOpacity);
+          gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
 
-      // Ensure particles are properly initialized
-      this.particles = new THREE.Points(geometry, this.material);
-      this.scene.add(this.particles);
+    this.particles = new THREE.Points(geometry, this.material);
+    this.scene.add(this.particles);
   }
 
   animate() {
-      const clock = new THREE.Clock();
-      
-      const animateFrame = () => {
-          requestAnimationFrame(animateFrame);
-          
-          // Add null check for particles
-          if (!this.particles) return;
+    const clock = new THREE.Clock();
 
-          const time = clock.getElapsedTime();
-          const positions = this.particles.geometry.attributes.position.array;
+    const animateFrame = () => {
+      requestAnimationFrame(animateFrame);
 
-          for(let i = 0; i < positions.length; i += 3) {
-              positions[i] += Math.sin(time * 0.5 + i) * 0.02;
-              positions[i+1] += Math.cos(time * 0.6 + i) * 0.02;
-              positions[i+2] += Math.sin(time * 0.4 + i) * 0.01;
-          }
+      if (!this.particles) return;
 
-          this.particles.geometry.attributes.position.needsUpdate = true;
-          this.renderer.render(this.scene, this.camera);
-      };
-      
-      animateFrame();
+      const time = clock.getElapsedTime();
+      const positions = this.particles.geometry.attributes.position.array;
+      const sizes = this.particles.geometry.attributes.size.array;
+      const opacity = this.particles.geometry.attributes.opacity.array;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        // Position variation
+        positions[i] += Math.sin(time * 0.5 + i) * 0.04;
+        positions[i + 1] += Math.cos(time * 0.6 + i) * 0.02;
+        positions[i + 2] += Math.sin(time * 0.4 + i) * 0.02;
+
+        // Size variation
+        sizes[i / 3] = 0.1 + Math.sin(time * 2 + i) * 0.8;
+
+        // Opacity variation (shimmer effect)
+        opacity[i / 3] = 1 + Math.sin(time * 3 + i) * 2;
+      }
+
+      this.particles.geometry.attributes.position.needsUpdate = true;
+      this.particles.geometry.attributes.size.needsUpdate = true;
+      this.particles.geometry.attributes.opacity.needsUpdate = true;
+
+      this.renderer.render(this.scene, this.camera);
+    };
+
+    animateFrame();
   }
 
   addEventListeners() {
-      window.addEventListener('resize', () => {
-          this.camera.left = window.innerWidth / -2;
-          this.camera.right = window.innerWidth / 2;
-          this.camera.top = window.innerHeight / 2;
-          this.camera.bottom = window.innerHeight / -2;
-          this.camera.updateProjectionMatrix();
-          this.renderer.setSize(window.innerWidth, window.innerHeight);
-      });
+    window.addEventListener("resize", () => {
+      this.camera.left = window.innerWidth / -2;
+      this.camera.right = window.innerWidth / 2;
+      this.camera.top = window.innerHeight / 2;
+      this.camera.bottom = window.innerHeight / -2;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   }
 }
 
-// Initialize after verifying Three.js is loaded
-if (typeof THREE !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => new NebulaParticles());
+if (typeof THREE !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => new NebulaParticles());
 } else {
-  console.error('Three.js not loaded!');
+  console.error("Three.js not loaded!");
 }
