@@ -2,8 +2,7 @@
 
 @font-face {
     font-family: 'crosswindsnowind';
-    src: url('fonts/crosswinds-nowind-webfont.woff2') format('woff2'),
-         url('fonts/crosswinds-nowind-webfont.woff') format('woff');
+    src: url('fonts/crosswinds-nowind-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -27,11 +26,7 @@
     text-decoration: none;
     transition: color 0.3s;
   }
-  
-  a:hover {
-    color: #ffa0b0;
-  }
-  
+
   /* Header */
   header {
     position: fixed;
@@ -54,9 +49,9 @@
   
   /* Social Links Container */
   .social-links {
-    display: flex;
+    display:flex;
     justify-content: center;
-    gap: 30px;
+    gap: 15px;
     flex-wrap: wrap;
     padding: 0 10px;
   }
@@ -124,14 +119,14 @@
     margin-bottom: 40px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    box-shadow: 0 0 10px #ff688c;
+    box-shadow: 0 0 1px #ff688c;
   }
   
   .newest-video h2 {
     text-align: center;
     margin-bottom: 20px;
     font-size: 1.5em;
-    color: #ff688c;
+    color: #ffffff;
   }
   
   .video-player-container {
@@ -162,12 +157,13 @@
   }
 
   .Logo {
-    position: fixed;
-    bottom: 650px;
-    left: 885px;
+    position: absolute;
+    bottom: 1380px;
+    left: 540px;
     width: 140px;
     height: auto;
     pointer-events: none;
+    color: #ff688c;
   }
   
   .video-wrapper {
@@ -212,7 +208,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 10px #ff688c;
+    box-shadow: 0 0 5px #ff688c;
     position: absolute;
     top: 40%;
   }
@@ -240,7 +236,7 @@
     text-align: center;
     margin-bottom: 20px;
     font-size: 1.5em;
-    color: #ff688c;
+    color: #ffffff;
   }
   
   .video-list {
@@ -256,7 +252,7 @@
     background: rgba(0, 0, 0, 0.9);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 0 10px #ff688c;
+    box-shadow: 0 0 3px #ff688c;
     transition: transform 0.3s, box-shadow 0.3s;
     position: relative;
     display: flex;
@@ -280,9 +276,10 @@
   
   .video-card .info h3 {
     margin-bottom: 10px;
+    padding: 8px;
     margin-left: 0px;
-    font-size: 15px;
-    color: #ff688c;
+    font-size: 13px;
+    color: #dddcdc;
   }
   
   .video-card .info p {
@@ -293,23 +290,24 @@
   footer {
     text-align: center;
     padding: 20px;
-    background: #1a1a1a;
+    background: #000000;
     margin-top: 40px;
     font-size: 0.8em;
   }
-
 
   body {
     margin: 0;
     overflow-x: hidden;
     background: linear-gradient(
         to bottom right,
+        #2a0a1d,
         #1a0a12,
         #2a0a1d,
         #1a0a12,
+        #2a0a1d,
         #1a0a12,
-        #1a0a12,
-        #1a0a12
+        #2a0a1d
+
     );
 }
 
@@ -319,6 +317,8 @@ canvas {
     left: 0;
     z-index: -1;
     pointer-events: none;
+    filter: blur(0.3px);
+    -webkit-filter: blur(0.3px);
 }
 
 .content {
@@ -326,4 +326,107 @@ canvas {
     z-index: 2;
     color: white;
     padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-top: 120px; /* Reduced header spacing */
+  }
+
+  header h1 {
+    font-size: 1.2rem; /* Smaller header text */
+    margin-bottom: 10px;
+  }
+
+  .social-links {
+    gap: 15px; /* Tighter social button spacing */
+  }
+
+  .social-button {
+    width: 50px; /* Smaller social buttons */
+    height: 50px;
+  }
+
+  .social-button i {
+    font-size: 1.8em;
+  }
+
+  .container {
+    width: 95%; /* More screen utilization */
+    margin: 80px auto 20px;
+  }
+
+  /* Hide decorative images on mobile */
+  .goku-image,
+  .gohan-image,
+  .Logo {
+    display: none;
+  }
+
+  .video-player-container {
+    padding: 0 10px; /* Add breathing room */
+  }
+
+  .arrow-button {
+    width: 40px; /* Smaller navigation arrows */
+    height: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  #left-arrow {
+    left: 5px;
+  }
+
+  #right-arrow {
+    right: 5px;
+  }
+
+  .video-card {
+    width: 100%; /* Full-width video cards */
+    max-width: 400px;
+  }
+
+  footer {
+    grid-template-columns: 1fr; /* Stack footer content */
+    text-align: center;
+    padding: 20px 10px;
+  }
+
+  /* Adjust video container positioning */
+  .newest-video {
+    margin: 0 10px 30px;
+    padding: 15px;
+  }
+
+  .video-wrapper {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1rem;
+  }
+
+  .social-links {
+    gap: 10px;
+  }
+
+  .social-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .social-button i {
+    font-size: 1.5em;
+  }
+
+  .video-card {
+    height: auto; /* Flexible video card height */
+  }
+
+  .video-card img {
+    height: 120px;
+  }
 }
