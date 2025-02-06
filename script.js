@@ -349,7 +349,7 @@ class NebulaParticles {
         positions[i + 2] += Math.sin(time * 0.4 + i) * 0.02;
 
         sizes[i / 3] = 0.1 + Math.sin(time * 2 + i) * 0.8;
-        opacity[i / 3] = 1 + Math.sin(time * 3 + i) * 2;
+        opacity[i / 3] = 2.0;
       }
 
       this.particles.geometry.attributes.position.needsUpdate = true;
