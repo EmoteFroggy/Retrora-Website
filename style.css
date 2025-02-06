@@ -393,7 +393,7 @@
   .heart {
     color: #ff688c;
     display: inline-block;
-    animation: pulse 0.2s ease infinite;
+    animation: pulse 0.9s ease infinite;
   }
   
   /* Animations */
