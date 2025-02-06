@@ -463,10 +463,17 @@
     .arrow-button {
       width: 40px;
       height: 40px;
+      display: flex !important; /* Force display regardless of other styles */
     }
   
-    #left-arrow { left: 5px; }
-    #right-arrow { right: 5px; }
+    #left-arrow { 
+      left: 5px;
+      display: flex !important; /* Force display for left arrow */
+    }
+    #right-arrow { 
+      right: 5px;
+      display: flex !important; /* Force display for right arrow */
+    }
   }
   
   @media (max-width: 600px) {
