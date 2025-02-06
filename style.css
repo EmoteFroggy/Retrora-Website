@@ -260,15 +260,18 @@ header h1 {
 }
 
 .Logo {
-  position: absolute;
-  bottom: 1350px;
-  left: 43%;
+  position: absolute; /* Change from absolute to fixed */
+  top: 135px; /* Adjust this value as needed */
+  left: 45%;
   width: 160px;
   height: auto;
   pointer-events: none;
-  fill: #ffffff; /* Set the color of the SVG */
+  fill: #ffffff;
   filter: drop-shadow(0 0 15px #ff688c);
+  z-index: 1;
 }
+
+
 
 .video-wrapper {
   position: relative;
@@ -336,6 +339,11 @@ header h1 {
   fill: #ff688c;
 }
 
+.other-videos {
+  position: relative;
+  margin-top: 40px;
+}
+
 .other-videos h2 {
   text-align: center;
   margin-bottom: 20px;
@@ -344,14 +352,18 @@ header h1 {
 }
 
 .video-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Force 4 columns */
   gap: 20px;
-  justify-content: center;
+  padding: 20px;
+  min-height: 800px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
+
 .video-card {
-  width: 280px;
+  width: 100%;
   height: 230px;
   background: rgba(0, 0, 0, 0.9);
   border-radius: 12px;
@@ -457,7 +469,8 @@ body {
 }
 
 .video-player-container {
-  padding: 0 100px; /* Add breathing room */
+  min-height: 600px;
+  position: relative;
 }
 
 .arrow-button {
@@ -518,4 +531,46 @@ header h1 {
 .video-card img {
   height: 120px;
 }
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 104, 140, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #ff688c;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .video-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .video-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .video-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .Logo {
+    display: none; /* or adjust positioning for mobile if you want to keep it */
+  }
 }
