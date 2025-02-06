@@ -231,7 +231,7 @@ class NebulaParticles {
     const sizes = new Float32Array(PARTICLE_COUNT);
     const opacity = new Float32Array(PARTICLE_COUNT);
 
-    const baseColor = new THREE.Color(0xff688c);
+    const baseColor = new THREE.Color(0xffffff);
     const depthRange = 5;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
