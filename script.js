@@ -5,11 +5,10 @@ const CHANNEL_IDS = [
 ];
 const CHANNEL_NAMES = ["Retrora & Co.", "Retrora Live"];
 let currentChannelIndex = 0;
+let currentNewestVideoId;
 
 // Using the uploads playlist (cheaper endpoint)
-const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map(
-  (id) => "UU" + id.slice(2)
-);
+const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map((id) => "UU" + id.slice(2));
 
 // Define expiration time for cache (in milliseconds)
 const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -59,41 +58,107 @@ function getLocalCache(key) {
   }
 }
 
-// Fetch the newest video in a playlist (for main video display)
-async function fetchNewestVideoFromPlaylist(playlistId, elementId) {
-  const cacheKey = getCacheKey("newest", playlistId, "1");
-  const cached = getLocalCache(cacheKey);
-  if (cached) {
-    currentNewestVideoId = cached[0].contentDetails.videoId;
-    document.getElementById(elementId).innerHTML = `
-      <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
-    `;
-    return;
-  }
+// Helper function to check if a video is a Short
+function isShort(video) {
+  const title = video.snippet?.title?.toLowerCase() || '';
+  const description = video.snippet?.description?.toLowerCase() || '';
+  
+  const thumbnailHeight = video.snippet?.thumbnails?.maxres?.height || 0;
+  const thumbnailWidth = video.snippet?.thumbnails?.maxres?.width || 0;
+  const aspectRatio = thumbnailWidth / thumbnailHeight;
+
+  return (
+    title.includes('#shorts') ||
+    title.includes('#short') ||
+    title.includes('(shorts)') ||
+    title.includes('(short)') ||
+    description.includes('#shorts') ||
+    description.includes('#short') ||
+    video.snippet?.title?.startsWith('shorts') ||
+    video.snippet?.title?.startsWith('short') ||
+    (thumbnailHeight && thumbnailWidth && aspectRatio < 1) ||
+    video.snippet?.resourceId?.videoId?.includes('/shorts/')
+  );
+}
+
+// Additional check for video duration
+async function getVideoDuration(videoId) {
   try {
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=1`;
+    const url = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoId}&part=contentDetails`;
     const response = await fetch(url);
     const data = await response.json();
-    console.log("Newest Video from Playlist Response:", data);
-    if (data.items && data.items.length > 0) {
-      currentNewestVideoId = data.items[0].contentDetails.videoId;
+    
+    if (data.items && data.items[0]) {
+      const duration = data.items[0].contentDetails.duration;
+      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      const hours = (parseInt(match[1]) || 0);
+      const minutes = (parseInt(match[2]) || 0);
+      const seconds = (parseInt(match[3]) || 0);
+      return hours * 3600 + minutes * 60 + seconds;
+    }
+    return 0;
+  } catch (error) {
+    console.error("Error fetching video duration:", error);
+    return 0;
+  }
+}
+
+// Fetch the newest video in a playlist (for main video display)
+async function fetchNewestVideoFromPlaylist(playlistId, elementId) {
+  // Show loading spinner
+  document.getElementById(elementId).innerHTML = '<div class="loading-spinner"></div>';
+
+  const cacheKey = getCacheKey("newest", playlistId, "1");
+  const cached = getLocalCache(cacheKey);
+
+  if (cached) {
+    const nonShortVideo = cached.find(video => !isShort(video));
+    if (nonShortVideo) {
+      currentNewestVideoId = nonShortVideo.contentDetails.videoId;
       document.getElementById(elementId).innerHTML = `
         <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
       `;
-      setLocalCache(cacheKey, data.items);
+      return;
+    }
+  }
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=20`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      // Find the first non-Short video
+      for (const video of data.items) {
+        if (!isShort(video)) {
+          // Double-check duration
+          const duration = await getVideoDuration(video.contentDetails.videoId);
+          // If duration is more than 60 seconds, it's likely not a Short
+          if (duration > 60) {
+            currentNewestVideoId = video.contentDetails.videoId;
+            document.getElementById(elementId).innerHTML = `
+              <iframe src="https://www.youtube.com/embed/${currentNewestVideoId}" allowfullscreen></iframe>
+            `;
+            setLocalCache(cacheKey, data.items);
+            return;
+          }
+        }
+      }
+      document.getElementById(elementId).innerHTML = "<p>No regular videos available.</p>";
     } else {
-      document.getElementById(elementId).innerHTML =
-        "<p>No videos available.</p>";
+      document.getElementById(elementId).innerHTML = "<p>No videos available.</p>";
     }
   } catch (error) {
     console.error("Error fetching newest video from playlist:", error);
-    document.getElementById(elementId).innerHTML =
-      "<p>Error loading video.</p>";
+    document.getElementById(elementId).innerHTML = "<p>Error loading video.</p>";
   }
 }
 
 // Fetch exactly 10 of the other videos from the playlist
 async function fetchOtherVideosFromPlaylist(playlistId) {
+  // Show loading spinner
+  document.getElementById("other-videos").innerHTML = '<div class="loading-spinner"></div>';
+
   const cacheKey = getCacheKey("other", playlistId, "47");
   const cachedItems = getLocalCache(cacheKey);
   if (cachedItems) {
@@ -122,7 +187,7 @@ async function fetchOtherVideosFromPlaylist(playlistId) {
 // Display the other videos
 async function displayOtherVideos(videos) {
   const otherVideosContainer = document.getElementById("other-videos");
-  otherVideosContainer.innerHTML = "";
+  otherVideosContainer.innerHTML = '<div class="loading-spinner"></div>';
   const videoIds = videos.map((video) => video.contentDetails.videoId).join(",");
   try {
     const durationResponse = await fetch(
@@ -136,10 +201,14 @@ async function displayOtherVideos(videos) {
     const filtered = videos.filter((video) => {
       const vidId = video.contentDetails.videoId;
       const duration = durationMap[vidId];
-      return duration >= 185 && vidId !== currentNewestVideoId;
+      return duration >= 185 && vidId !== currentNewestVideoId && !isShort(video);
     });
     const desiredCount = 12;
     const videosToDisplay = filtered.slice(0, desiredCount);
+    
+    // Clear loading spinner
+    otherVideosContainer.innerHTML = '';
+    
     videosToDisplay.forEach((video) => {
       const vidId = video.contentDetails.videoId;
       otherVideosContainer.innerHTML += `
@@ -169,30 +238,56 @@ function isoDurationToSeconds(isoDuration) {
 }
 
 // Switch the channel
+// Switch the channel
 function switchChannel(direction) {
+  // Disable channel switching while loading
+  const leftArrow = document.getElementById("left-arrow");
+  const rightArrow = document.getElementById("right-arrow");
+  leftArrow.style.pointerEvents = "none";
+  rightArrow.style.pointerEvents = "none";
+
+  // Update channel index
   currentChannelIndex =
-    (currentChannelIndex + direction + CHANNEL_IDS.length) %
-    CHANNEL_IDS.length;
+    (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
+  
   const channelName = CHANNEL_NAMES[currentChannelIndex];
   const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
-  document.getElementById("channel-name").textContent = `NEWEST VIDEO FROM ${channelName.toUpperCase()}`;
-  fetchNewestVideoFromPlaylist(playlistId, "newest-video");
-  fetchOtherVideosFromPlaylist(playlistId);
-  if (currentChannelIndex === 0) {
-    document.getElementById("left-arrow").style.display = "none";
-    document.getElementById("right-arrow").style.display = "block";
-  } else if (currentChannelIndex === 1) {
-    document.getElementById("left-arrow").style.display = "block";
-    document.getElementById("right-arrow").style.display = "none";
-  }
+  
+  // Update channel name
+  document.getElementById("channel-name").textContent = 
+    `NEWEST VIDEO FROM ${channelName.toUpperCase()}`;
+
+  // Only update the video sections, not the entire container
+  const newestVideo = document.getElementById("newest-video");
+  const otherVideos = document.getElementById("other-videos");
+
+  // Show loading states
+  newestVideo.innerHTML = '<div class="loading-spinner"></div>';
+  otherVideos.innerHTML = '<div class="loading-spinner"></div>';
+
+  // Fetch new content
+  Promise.all([
+    fetchNewestVideoFromPlaylist(playlistId, "newest-video"),
+    fetchOtherVideosFromPlaylist(playlistId)
+  ]).finally(() => {
+    // Re-enable channel switching
+    leftArrow.style.pointerEvents = "auto";
+    rightArrow.style.pointerEvents = "auto";
+
+    // Update arrow visibility
+    if (currentChannelIndex === 0) {
+      leftArrow.style.display = "none";
+      rightArrow.style.display = "block";
+    } else if (currentChannelIndex === 1) {
+      leftArrow.style.display = "block";
+      rightArrow.style.display = "none";
+    }
+  });
 }
+
 
 // Switch channel when page loads
 switchChannel(0);
-
-
-
-
 
 class NebulaParticles {
   constructor() {
@@ -231,7 +326,7 @@ class NebulaParticles {
     const sizes = new Float32Array(PARTICLE_COUNT);
     const opacity = new Float32Array(PARTICLE_COUNT);
 
-    const baseColor = new THREE.Color(0xffffff);
+    const baseColor = new THREE.Color(0xff688c);
     const depthRange = 5;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -245,9 +340,8 @@ class NebulaParticles {
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      // Initial size variation (smaller range)
-      sizes[i] = 2.0 + Math.random() * 3.0; // Reduced size range
-      opacity[i] = 1.0 + Math.random() * 2.0; // Higher opacity for visibility
+      sizes[i] = 2.0 + Math.random() * 3.0;
+      opacity[i] = 1.0 + Math.random() * 2.0;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -274,7 +368,7 @@ class NebulaParticles {
           vColor = color;
           vOpacity = opacity;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * (150.0 / -mvPosition.z); // Adjust size based on distance
+          gl_PointSize = size * (150.0 / -mvPosition.z);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
@@ -310,15 +404,11 @@ class NebulaParticles {
       const opacity = this.particles.geometry.attributes.opacity.array;
 
       for (let i = 0; i < positions.length; i += 3) {
-        // Position variation
         positions[i] += Math.sin(time * 0.5 + i) * 0.04;
         positions[i + 1] += Math.cos(time * 0.6 + i) * 0.02;
         positions[i + 2] += Math.sin(time * 0.4 + i) * 0.02;
 
-        // Size variation
         sizes[i / 3] = 0.1 + Math.sin(time * 2 + i) * 0.8;
-
-        // Opacity variation (shimmer effect)
         opacity[i / 3] = 1 + Math.sin(time * 3 + i) * 2;
       }
 
