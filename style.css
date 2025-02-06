@@ -68,11 +68,12 @@
     overflow: hidden;
     backdrop-filter: blur(5px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-decoration: none;
   }
   
   .social-button i {
     font-size: 1.8em;
-    color: #fff;
+    color: #ff688c; /* Pink by default */
     transition: all 0.4s ease;
     z-index: 2;
   }
@@ -88,7 +89,7 @@
   }
   
   .social-button:hover i {
-    color: #ff688c;
+    color: #ffffff; /* White on hover */
     transform: scale(1.2);
   }
   
@@ -108,12 +109,12 @@
   .social-button.bluesky svg {
     width: 50%;
     height: auto;
-    fill: #fff;
+    fill: #ff688c; /* Pink by default */
     transition: all 0.4s ease;
   }
   
   .social-button.bluesky:hover svg {
-    fill: #ff688c;
+    fill: #ffffff; /* White on hover */
     transform: scale(1.2);
   }
   
