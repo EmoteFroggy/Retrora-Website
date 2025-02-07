@@ -355,7 +355,7 @@
     z-index: 1;
   }
   
-  .goku-image {
+  .thumbs-down {
     position: absolute;
     transform: scaleX(-1);
     bottom: -40px;
@@ -365,7 +365,7 @@
     pointer-events: none;
   }
   
-  .gohan-image {
+  .ret-waving {
     position: absolute;
     bottom: -40px;
     left: 1000px;
@@ -457,8 +457,8 @@
     }
   
     .Logo,
-    .goku-image,
-    .gohan-image {
+    .thumbs-down,
+    .ret-waving {
       display: none;
     }
   
