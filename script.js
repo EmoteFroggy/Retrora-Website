@@ -5,7 +5,7 @@ const CHANNEL_IDS = [
 ];
 const CHANNEL_NAMES = ["Retrora & Co.", "Retrora Live"];
 const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map((id) => "UU" + id.slice(2));
-const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_EXPIRY_MS = 60 * 60 * 1000;
 
 let currentChannelIndex = 0;
 let currentNewestVideoId;
@@ -16,7 +16,6 @@ async function debugFetch(url, options) {
   console.debug(`Making API request: ${url}`);
   apiQueryCount++;
   const response = await fetch(url, options);
-  // Optionally log the current count after each request.
   console.debug(`API Query Count: ${apiQueryCount}`);
   return response;
 }
@@ -77,8 +76,6 @@ function isShort(video) {
          description.includes('#short');
 }
 
-
-
 function generateVideoHTML(video, elementType) {
   const videoId = video.contentDetails.videoId;
   const thumbnail = video.snippet.thumbnails.maxres?.url || 
@@ -121,28 +118,23 @@ async function fetchChannelVideos(playlistId) {
   }
 
   try {
-      // First, get the playlist items
       const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
       const playlistResponse = await debugFetch(playlistUrl);
       const playlistData = await playlistResponse.json();
 
       if (playlistData.items && playlistData.items.length > 0) {
-          // Get all video IDs
           const videoIds = playlistData.items.map(item => item.contentDetails.videoId).join(',');
           
-          // Get video durations
           const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
           const videoResponse = await debugFetch(videoUrl);
           const videoData = await videoResponse.json();
 
-          // Create duration map
           const durationMap = {};
           videoData.items.forEach(item => {
               const duration = parseDuration(item.contentDetails.duration);
               durationMap[item.id] = duration;
           });
 
-          // Add duration to playlist items
           const videosWithDuration = playlistData.items.map(item => ({
               ...item,
               duration: durationMap[item.contentDetails.videoId]
@@ -174,17 +166,13 @@ function displayVideos(videos) {
   const newestVideoWrapper = document.getElementById("newest-video");
   newestVideoWrapper.innerHTML = '<div class="loading-spinner"></div>';
 
-  // Filter non-short videos first
   const nonShortVideos = videos.filter(video => !isShort(video));
 
-  // Find newest non-short video
   const newestVideo = nonShortVideos[0];
   if (newestVideo) {
     currentNewestVideoId = newestVideo.contentDetails.videoId;
-    // Update the video player container
     newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, 'newest');
     
-    // Update the new element with the title of the newest video
     const videoTitleElem = document.getElementById("video-title");
     videoTitleElem.textContent = newestVideo.snippet.title;
   } else {
@@ -212,18 +200,14 @@ function displayVideos(videos) {
   }
 }
 
-
     function selectChannel(index) {
-      // Avoid unnecessary work if the channel is already active.
       if (index === currentChannelIndex) return;
 
       currentChannelIndex = index;
       
-      // Update the channel header text.
       document.getElementById("channel-name").textContent =
         `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
 
-      // Update the active styling on the channel buttons.
       const buttons = document.querySelectorAll(".channel-btn");
       buttons.forEach((btn, btnIndex) => {
         if (btnIndex === currentChannelIndex) {
@@ -413,6 +397,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load the default channel videos
   fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
 });
+
+const heartEl = document.getElementById("heart");
+  // URL for the alternative image.
+  const altImageURL = "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";
+  
+  // Track toggle state
+  let isHeart = true;
+  
+  heartEl.addEventListener("click", () => {
+    if (isHeart) {
+      // Replace heart with an image
+      heartEl.innerHTML = `<img src="${altImageURL}" alt="smiley" style="height: 1em; vertical-align: middle;">`;
+      // Optionally pause the pulse animation
+      heartEl.classList.remove("heart");
+    } else {
+      // Restore the heart, and reapply the class for the pulse
+      heartEl.innerHTML = "❤";
+      heartEl.classList.add("heart");
+    }
+    isHeart = !isHeart;
+  });
 
 // Initial load
 // Initial load

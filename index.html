@@ -10,21 +10,20 @@
           auto;
       }
     </style>
-    <!-- Font Awesome CDN (Free version) -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       crossorigin="anonymous"
     />
-    <!-- Link your external CSS file -->
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <!-- Header with Social Media Buttons -->
     <header>
-      <h1>RETRORA & CO.</h1>
+      <div class="header-text">
+        <p>RETRORA & CO.</p>
+      </div>
       <div class="social-links">
-        <!-- Twitch -->
         <a
           href="https://www.twitch.tv/Retrora/"
           target="_blank"
@@ -33,7 +32,6 @@
         >
           <i class="fab fa-twitch fa-lg"></i>
         </a>
-        <!-- YouTube -->
         <a
           href="https://www.youtube.com/@RetroraAndCo"
           target="_blank"
@@ -42,7 +40,6 @@
         >
           <i class="fab fa-youtube fa-lg"></i>
         </a>
-        <!-- Live Channel -->
         <a
           href="https://www.youtube.com/@RetroraLIVE"
           target="_blank"
@@ -51,7 +48,6 @@
         >
           <i class="fas fa-video fa-lg"></i>
         </a>
-        <!-- Twitter -->
         <a
           href="https://twitter.com/Retrora"
           target="_blank"
@@ -60,7 +56,6 @@
         >
           <i class="fab fa-twitter fa-lg"></i>
         </a>
-        <!-- Instagram -->
         <a
           href="https://www.instagram.com/retrora.co"
           target="_blank"
@@ -69,7 +64,6 @@
         >
           <i class="fab fa-instagram fa-lg"></i>
         </a>
-        <!-- Discord -->
         <a
           href="https://discord.com/invite/Retrora"
           target="_blank"
@@ -78,7 +72,6 @@
         >
           <i class="fab fa-discord fa-lg"></i>
         </a>
-        <!-- Patreon -->
         <a
           href="https://www.patreon.com/Retrora"
           target="_blank"
@@ -87,7 +80,6 @@
         >
           <i class="fab fa-patreon fa-lg"></i>
         </a>
-        <!-- TikTok -->
         <a
           href="https://www.tiktok.com/@retrora?"
           target="_blank"
@@ -96,7 +88,6 @@
         >
           <i class="fab fa-tiktok fa-lg"></i>
         </a>
-        <!-- Steam Community -->
         <a
           href="https://steamcommunity.com/groups/Retrora"
           target="_blank"
@@ -105,7 +96,6 @@
         >
           <i class="fab fa-steam fa-lg"></i>
         </a>
-        <!-- Bluesky -->
         <a
           href="https://bsky.app/profile/retrora.bsky.social"
           target="_blank"
@@ -122,7 +112,6 @@
       </div>
     </header>
 
-    <!-- Logo SVG (moved outside container) -->
     <svg
       class="Logo"
       version="1.1"
@@ -141,11 +130,8 @@
       </g>
     </svg>
 
-    <!-- Main Content -->
-    <!-- Main Content -->
 <div class="container">
   <section class="newest-video">
-    <!-- New Channel Selection Buttons -->
     <div class="channel-buttons">
       <button id="channel-btn-0" class="channel-btn active">
         Retrora &amp; Co.
@@ -159,7 +145,6 @@
   <p id="video-title"></p>
     <div class="video-player-container">
       <div class="video-wrapper" id="newest-video">
-        <!-- Newest video iframe will be injected here -->
       </div>
     </div>
   </section>
@@ -167,11 +152,9 @@
   <img class="thumbs-down" src="https://gachi.gay/O4-Cp"  />
   <img class="ret-waving" src="https://gachi.gay/Jzt8i"  />
 
-  <!-- Other Videos Section -->
   <section class="other-videos">
     <h2>OTHER VIDEOS</h2>
     <div class="video-list" id="other-videos">
-      <!-- Additional video cards will be injected here -->
     </div>
   </section>
 </div>
@@ -179,10 +162,10 @@
 
     <footer class="site-footer">
       <div class="footer-content">
-          <p>Made with <span class="heart">❤</span> by EmoteFroggy</p>
+          <p>Made with <span id="heart" class="heart">❤</span> by EmoteFroggy</p>
       </div>
   </footer>
-    <!-- Link your external JavaScript file -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     <script src="script.js"></script>
