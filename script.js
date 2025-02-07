@@ -10,8 +10,18 @@ const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 let currentChannelIndex = 0;
 let currentNewestVideoId;
 let cachedData = {};
+let apiQueryCount = 0;
 
-function getCacheKey(type, playlistId, additional = "10") {
+async function debugFetch(url, options) {
+  console.debug(`Making API request: ${url}`);
+  apiQueryCount++;
+  const response = await fetch(url, options);
+  // Optionally log the current count after each request.
+  console.debug(`API Query Count: ${apiQueryCount}`);
+  return response;
+}
+
+function getCacheKey(type, playlistId, additional) {
   return `${type}_${playlistId}_${additional}`;
 }
 
@@ -52,24 +62,21 @@ function getLocalCache(key) {
 }
 
 function isShort(video) {
-  // If duration is available, use it as primary check
   if (video.duration && video.duration <= 182) {
       return true;
   }
 
   const title = (video.snippet.title || '').toLowerCase();
   const description = (video.snippet.description || '').toLowerCase();
-  
-  // Additional checks for shorts indicators
+
   return title.includes('#shorts') ||
          title.includes('#short') ||
          title.includes('(shorts)') ||
          title.includes('(short)') ||
          description.includes('#shorts') ||
-         description.includes('#short') ||
-         video.snippet?.title?.startsWith('shorts') ||
-         video.snippet?.title?.startsWith('short');
+         description.includes('#short');
 }
+
 
 
 function generateVideoHTML(video, elementType) {
@@ -83,12 +90,11 @@ function generateVideoHTML(video, elementType) {
     return `
       <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="newest-video-link">
         <div class="newest-thumbnail">
-          <img src="${thumbnail}" alt="${title}">
+          <img src="${thumbnail}">
           <div class="play-button">
             <i class="fas fa-play"></i>
           </div>
         </div>
-        <h3>${title}</h3>
       </a>
     `;
   }
@@ -96,7 +102,7 @@ function generateVideoHTML(video, elementType) {
   return `
     <a class="video-card-link" href="https://www.youtube.com/watch?v=${videoId}" target="_blank">
       <div class="video-card">
-        <img src="${thumbnail}" alt="${title}">
+        <img src="${thumbnail}">
         <div class="info">
           <h3 style="padding-left: 10px;">${title}</h3>
         </div>
@@ -106,7 +112,7 @@ function generateVideoHTML(video, elementType) {
 }
 
 async function fetchChannelVideos(playlistId) {
-  const cacheKey = getCacheKey("channel", playlistId, "47");
+  const cacheKey = getCacheKey("channel", playlistId, "50");
   const cached = getLocalCache(cacheKey);
 
   if (cached) {
@@ -116,8 +122,8 @@ async function fetchChannelVideos(playlistId) {
 
   try {
       // First, get the playlist items
-      const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=47`;
-      const playlistResponse = await fetch(playlistUrl);
+      const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
+      const playlistResponse = await debugFetch(playlistUrl);
       const playlistData = await playlistResponse.json();
 
       if (playlistData.items && playlistData.items.length > 0) {
@@ -126,7 +132,7 @@ async function fetchChannelVideos(playlistId) {
           
           // Get video durations
           const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
-          const videoResponse = await fetch(videoUrl);
+          const videoResponse = await debugFetch(videoUrl);
           const videoData = await videoResponse.json();
 
           // Create duration map
@@ -153,6 +159,7 @@ async function fetchChannelVideos(playlistId) {
       document.getElementById("newest-video").innerHTML = "<p>Error loading video.</p>";
       document.getElementById("other-videos").innerHTML = "<p>Error loading videos.</p>";
   }
+  console.info(`Total API queries made: ${apiQueryCount}`);
 }
 
 function parseDuration(duration) {
@@ -173,19 +180,27 @@ function displayVideos(videos) {
   // Find newest non-short video
   const newestVideo = nonShortVideos[0];
   if (newestVideo) {
-      currentNewestVideoId = newestVideo.contentDetails.videoId;
-      newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, 'newest');
+    currentNewestVideoId = newestVideo.contentDetails.videoId;
+    // Update the video player container
+    newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, 'newest');
+    
+    // Update the new element with the title of the newest video
+    const videoTitleElem = document.getElementById("video-title");
+    videoTitleElem.textContent = newestVideo.snippet.title;
   } else {
-      newestVideoWrapper.innerHTML = "<p>No regular videos available.</p>";
+    newestVideoWrapper.innerHTML = "<p>No regular videos available.</p>";
+    document.getElementById("video-title").textContent = "";
   }
 
   const otherVideosContainer = document.getElementById("other-videos");
   otherVideosContainer.innerHTML = '<div class="loading-spinner"></div>';
 
-  // Get other non-short videos (excluding the newest)
-  const otherVideos = nonShortVideos
-      .filter(video => video.contentDetails.videoId !== currentNewestVideoId)
-      .slice(0, 12);
+  let otherVideos = [];
+  for (let i = 0; i < nonShortVideos.length && otherVideos.length < 12; i++) {
+    if (nonShortVideos[i].contentDetails.videoId !== currentNewestVideoId) {
+      otherVideos.push(nonShortVideos[i]);
+    }
+  }
 
   if (otherVideos.length > 0) {
       otherVideosContainer.innerHTML = '';
@@ -198,36 +213,44 @@ function displayVideos(videos) {
 }
 
 
-function switchChannel(direction) {
-    const leftArrow = document.getElementById("left-arrow");
-    const rightArrow = document.getElementById("right-arrow");
-    leftArrow.style.pointerEvents = "none";
-    rightArrow.style.pointerEvents = "none";
+    function selectChannel(index) {
+      // Avoid unnecessary work if the channel is already active.
+      if (index === currentChannelIndex) return;
 
-    currentChannelIndex = (currentChannelIndex + direction + CHANNEL_IDS.length) % CHANNEL_IDS.length;
-    
-    const channelName = CHANNEL_NAMES[currentChannelIndex];
-    const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
-    
-    document.getElementById("channel-name").textContent = 
-        `NEWEST VIDEO FROM ${channelName.toUpperCase()}`;
+      currentChannelIndex = index;
+      
+      // Update the channel header text.
+      document.getElementById("channel-name").textContent =
+        `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
 
-    document.getElementById("newest-video").innerHTML = '<div class="loading-spinner"></div>';
-    document.getElementById("other-videos").innerHTML = '<div class="loading-spinner"></div>';
-
-    fetchChannelVideos(playlistId).finally(() => {
-        leftArrow.style.pointerEvents = "auto";
-        rightArrow.style.pointerEvents = "auto";
-
-        if (currentChannelIndex === 0) {
-            leftArrow.style.display = "none";
-            rightArrow.style.display = "block";
-        } else if (currentChannelIndex === 1) {
-            leftArrow.style.display = "block";
-            rightArrow.style.display = "none";
+      // Update the active styling on the channel buttons.
+      const buttons = document.querySelectorAll(".channel-btn");
+      buttons.forEach((btn, btnIndex) => {
+        if (btnIndex === currentChannelIndex) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
         }
+      });
+
+      // Show loading spinners in the video containers.
+      document.getElementById("newest-video").innerHTML =
+        '<div class="loading-spinner"></div>';
+      document.getElementById("other-videos").innerHTML =
+        '<div class="loading-spinner"></div>';
+
+      // Fetch the videos for the selected channel.
+      const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
+      fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+    }
+
+    // Attach event listeners to the channel buttons.
+    document.getElementById("channel-btn-0").addEventListener("click", () => {
+      selectChannel(0);
     });
-}
+    document.getElementById("channel-btn-1").addEventListener("click", () => {
+      selectChannel(1);
+    });
 
 class NebulaParticles {
   constructor() {
@@ -339,9 +362,10 @@ class NebulaParticles {
       if (!this.particles) return;
 
       const time = clock.getElapsedTime();
-      const positions = this.particles.geometry.attributes.position.array;
-      const sizes = this.particles.geometry.attributes.size.array;
-      const opacity = this.particles.geometry.attributes.opacity.array;
+      const attributes = this.particles.geometry.attributes;
+      const positions = attributes.position.array;
+      const sizes = attributes.size.array;
+      const opacity = attributes.opacity.array;
 
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += Math.sin(time * 0.5 + i) * 0.04;
@@ -351,6 +375,7 @@ class NebulaParticles {
         sizes[i / 3] = 0.1 + Math.sin(time * 2 + i) * 0.8;
         opacity[i / 3] = 2.0;
       }
+
 
       this.particles.geometry.attributes.position.needsUpdate = true;
       this.particles.geometry.attributes.size.needsUpdate = true;
@@ -380,5 +405,16 @@ if (typeof THREE !== "undefined") {
   console.error("Three.js not loaded!");
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  // Set the header text to reflect the default channel (index 0)
+  document.getElementById("channel-name").textContent =
+    `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
+
+  // Load the default channel videos
+  fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+});
+
 // Initial load
-switchChannel(0);
+// Initial load
+fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+

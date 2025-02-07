@@ -10,15 +10,6 @@
           auto;
       }
     </style>
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Big+Noodle+Titling&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
     <!-- Font Awesome CDN (Free version) -->
     <link
       rel="stylesheet"
@@ -32,7 +23,6 @@
     <!-- Header with Social Media Buttons -->
     <header>
       <h1>RETRORA & CO.</h1>
-      <h2></h2>
       <div class="social-links">
         <!-- Twitch -->
         <a
@@ -152,52 +142,40 @@
     </svg>
 
     <!-- Main Content -->
-    <div class="container">
-      <!-- Newest Video Section -->
-      <section class="newest-video">
-        <div class="energy-glow"></div>
-        <h2 id="channel-name">Newest Video</h2>
-        <div class="video-player-container">
-          <button
-            class="arrow-button"
-            onclick="switchChannel(-1)"
-            id="left-arrow"
-            style="display: none"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path
-                d="M13.7,8.3c-0.4-0.4-1-0.4-1.4,0l-3,3c-0.4,0.4-0.4,1,0,1.4l3,3c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3
-                c0.4-0.4,0.4-1,0-1.4L11.4,12l2.3-2.3C14.1,9.3,14.1,8.7,13.7,8.3z"
-              />
-            </svg>
-          </button>
-          <div class="video-wrapper" id="newest-video">
-            <!-- Newest video iframe will be injected here -->
-          </div>
-          <button
-            class="arrow-button"
-            onclick="switchChannel(1)"
-            id="right-arrow"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path
-                d="M10.3,15.7c0.4,0.4,1,0.4,1.4,0l3-3c0.4-0.4,0.4-1,0-1.4l-3-3c-0.2-0.2-0.5-0.3-0.7-0.3s-0.5,0.1-0.7,0.3
-                C9.9,9.3,9.9,9.7,10.3,10.1L12.6,12l-2.3,2.3C9.9,14.7,9.9,15.3,10.3,15.7z"
-              />
-            </svg>
-          </button>
-        </div>
-      </section>
-      <img src="https://gachi.gay/O4-Cp" alt="Goku Manga" class="goku-image" />
-      <img class="gohan-image" src="https://gachi.gay/Jzt8i" alt="Gachi" />
-      <!-- Other Videos Section -->
-      <section class="other-videos">
-        <h2>OTHER VIDEOS</h2>
-        <div class="video-list" id="other-videos">
-          <!-- Additional video cards will be injected here -->
-        </div>
-      </section>
+    <!-- Main Content -->
+<div class="container">
+  <section class="newest-video">
+    <!-- New Channel Selection Buttons -->
+    <div class="channel-buttons">
+      <button id="channel-btn-0" class="channel-btn active">
+        Retrora &amp; Co.
+      </button>
+      <button id="channel-btn-1" class="channel-btn">
+        Retrora Live
+      </button>
     </div>
+    
+    <h2 id="channel-name">NEWEST VIDEO FROM RETRORA &amp; CO.</h2>
+  <p id="video-title">[Newest Video Title]</p>
+    <div class="video-player-container">
+      <div class="video-wrapper" id="newest-video">
+        <!-- Newest video iframe will be injected here -->
+      </div>
+    </div>
+  </section>
+
+  <img src="https://gachi.gay/O4-Cp" alt="Goku Manga" class="goku-image" />
+  <img class="gohan-image" src="https://gachi.gay/Jzt8i" alt="Gachi" />
+
+  <!-- Other Videos Section -->
+  <section class="other-videos">
+    <h2>OTHER VIDEOS</h2>
+    <div class="video-list" id="other-videos">
+      <!-- Additional video cards will be injected here -->
+    </div>
+  </section>
+</div>
+
 
     <footer class="site-footer">
       <div class="footer-content">
@@ -205,7 +183,6 @@
       </div>
   </footer>
     <!-- Link your external JavaScript file -->
-    <div id="nebula-container"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     <script src="script.js"></script>

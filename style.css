@@ -42,7 +42,7 @@
   
   header h1 {
     font-size: 2.0rem;
-    color: #ff688c;
+    color: #ffffff;
     text-align: center;
     margin-bottom: 5px;
   }
@@ -74,7 +74,6 @@
   .social-button i {
     font-size: 1.8em;
     color: #ff688c; /* Pink by default */
-    transition: all 0.4s ease;
     z-index: 2;
   }
   
@@ -85,7 +84,6 @@
     box-shadow: 
       0 5px 15px rgba(255, 104, 140, 0.4),
       0 0 30px rgba(255, 104, 140, 0.3),
-      inset 0 0 15px rgba(255, 255, 255, 0.3);
   }
   
   .social-button:hover i {
@@ -97,9 +95,9 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+    background: linear-gradient(135deg, #ff688c 0%, #ff688c 50%, transparent 100%);
     transform: translateY(100%);
-    transition: transform 0.4s ease;
+    transition: transform 0.1s ease;
   }
   
   .social-button:hover::before {
@@ -154,6 +152,8 @@
     padding: 25px;
     border-radius: 50px;
     margin-bottom: 25px;
+    margin-left: 20px;
+    margin-right: 20px;
     overflow: hidden;
     box-shadow: 0 0 5px #ff688c;
   }
@@ -180,34 +180,33 @@
     border-radius: 10px;
   }
   
-  /* Navigation Arrows */
-  .arrow-button {
-    position: absolute;
-    top: 40%;
-    width: 70px;
-    height: 70px;
-    background: #000;
-    border: none;
-    border-radius: 50%;
-    box-shadow: 0 0 5px #ff688c;
+  /* Navigation Buttons */
+  .channel-buttons {
     display: flex;
-    align-items: center;
     justify-content: center;
-    transition: transform 0.3s, box-shadow 0.3s;
+    gap: 10px;
+    margin-bottom: 10px;
   }
   
-  #left-arrow { left: -125px; }
-  #right-arrow { right: -125px; }
+  .channel-btn {
+    padding: 10px 20px;
+    background: rgba(255, 104, 140, 0.1);
+    border: 2px solid transparent;
+    border-radius: 5px;
+    color: #ff688c;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
   
-  .arrow-button:hover {
-    transform: scale(1.1);
+  .channel-btn:hover {
+    transform: scale(1.05);
+  }
+  
+  .channel-btn.active {
+    background: #ff688c;
+    color: #fff;
     box-shadow: 0 0 15px #ff688c;
-  }
-  
-  .arrow-button svg {
-    width: 100%;
-    height: auto;
-    fill: #ff688c;
   }
     
   /* Other Videos Section */
@@ -246,6 +245,14 @@
     display: flex;
     flex-direction: column;
   }
+
+  #video-title {
+    color: #ffffff;
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 10px;
+    font-family: 'crosswindsnowind';
+  }
   
   .video-card:hover {
     transform: scale(1.03);
@@ -262,7 +269,7 @@
     margin-bottom: 10px;
     padding: 8px;
     font-size: 13px;
-    color: #dddcdc;
+    color: #ffffff;
   }
   
   .video-card-link {
