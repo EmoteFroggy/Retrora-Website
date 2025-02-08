@@ -81,7 +81,6 @@
     justify-content: center;
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(5px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     text-decoration: none;
     box-shadow: var(--primary-pink) 0 0 5px;
