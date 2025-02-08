@@ -2,6 +2,13 @@
    1. CSS Reset & Base Styles
    ========================================================================== */
    /* Reset & Base Styles */
+
+   :root {
+    --primary-pink: #ff688c;
+    --primary-dark: #000;
+    --light-text: #eee;
+  }
+
    * {
     margin: 0;
     padding: 0;
@@ -15,8 +22,8 @@
   
   body {
     font-family: 'crosswindsnowind';
-    background: #000;
-    color: #eee;
+    background: var(--primary-dark);
+    color: var(--light-text);
     line-height: 1.6;
     overflow-x: hidden;
     position: relative;
@@ -35,14 +42,14 @@
     top: 0;
     left: 0;
     width: 100%;
-    background: #000;
+    background: var(--primary-dark);
     padding: 10px 0;
     z-index: 1002;
   }
 
   .header-text {
     color: #ffffff;
-    text-shadow: #ff688c 0px 0px 25px;
+    text-shadow: var(--primary-pink) 0px 0px 25px;
     font-size: 2.0em;
     text-align: center;
     font-family: 'crosswindsnowind';
@@ -77,22 +84,22 @@
     backdrop-filter: blur(5px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     text-decoration: none;
-    box-shadow: #ff688c 0 0 5px;
+    box-shadow: var(--primary-pink) 0 0 5px;
   }
   
   .social-button i {
     font-size: 1.8em;
-    color: #ff688c; /* Pink by default */
+    color: var(--primary-pink); /* Pink by default */
     z-index: 2;
   }
   
   .social-button:hover {
     transform: translateY(-5px) scale(1.1);
     border-radius: 15px;
-    background: #ff688c;
+    background: var(--primary-pink);
     box-shadow: 
       0 5px 15px rgba(255, 104, 140, 0.4),
-      0 0 30px rgba(255, 104, 140, 0.3),
+      0 0 30px rgba(255, 104, 140, 0.3);
   }
   
   .social-button:hover i {
@@ -104,7 +111,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #ff688c 0%, #ff688c 50%, transparent 100%);
+    background: linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-pink) 50%, transparent 100%);
     transform: translateY(100%);
     transition: transform 0.1s ease;
   }
@@ -116,7 +123,7 @@
   .social-button.bluesky svg {
     width: 50%;
     height: auto;
-    fill: #ff688c; /* Pink by default */
+    fill: var(--primary-pink); /* Pink by default */
     transition: all 0.4s ease;
   }
   
@@ -164,7 +171,7 @@
     margin-left: 20px;
     margin-right: 20px;
     overflow: hidden;
-    box-shadow: 0 0 5px #ff688c;
+    box-shadow: 0 0 5px var(--primary-pink);
   }
   
   .newest-video h2 {
@@ -205,12 +212,12 @@
     background: #ff688b0a;
     border: 1px solid transparent;
     border-radius: 15px;
-    color: #ff688c;
+    color: var(--primary-pink);
     font-size: 1.1em;
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: 'crosswindsnowind';
-    box-shadow: #ff688c 0 0 5px;
+    box-shadow: var(--primary-pink) 0 0 5px;
   }
   
   .channel-btn:hover {
@@ -218,15 +225,15 @@
   }
   
   .channel-btn.active {
-    background: #ff688c;
+    background: var(--primary-pink);
     color: #fff;
-    box-shadow: 0 0 10px #ff688c;
+    box-shadow: 0 0 10px var(--primary-pink);
   }
     
   /* Other Videos Section */
   .other-videos {
     position: relative;
-    margin-top: 40px;
+    margin-top: 20px;
   }
   
   .other-videos h2 {
@@ -253,7 +260,7 @@
     background: rgba(0, 0, 0, 1);
     border-radius: 15px;
     overflow: hidden;
-    box-shadow: 0 0 6px #ff688c;
+    box-shadow: 0 0 6px var(--primary-pink);
     transition: transform 0.3s, box-shadow 0.3s;
     position: relative;
     display: flex;
@@ -270,7 +277,7 @@
   
   .video-card:hover {
     transform: scale(1.03);
-    box-shadow: 0 0 15px #ff688c;
+    box-shadow: 0 0 15px var(--primary-pink);
   }
   
   .video-card img {
@@ -363,9 +370,8 @@
     left: 45%;
     width: 160px;
     height: auto;
-    pointer-events: none;
     fill: #fff;
-    filter: drop-shadow(0 0 15px #ff688c);
+    filter: drop-shadow(0 0 15px var(--primary-pink));
     z-index: 1;
   }
   
@@ -376,7 +382,6 @@
     left: -350px;
     width: 350px;
     height: auto;
-    pointer-events: none;
   }
   
   .ret-waving {
@@ -385,8 +390,14 @@
     left: 1000px;
     width: 550px;
     height: auto;
+  }
+
+  .Logo,
+  .thumbs-down,
+  .ret-waving {
     pointer-events: none;
   }
+
   
   /* Loading Animation */
   .loading-spinner {
@@ -398,7 +409,7 @@
     height: 40px;
     border: 4px solid rgba(255, 104, 140, 0.3);
     border-radius: 50%;
-    border-top: 4px solid #ff688c;
+    border-top: 4px solid var(--primary-pink);
     animation: spin 1s linear infinite;
   }
   
@@ -406,13 +417,13 @@
   footer {
     text-align: center;
     padding: 20px;
-    background: #000;
+    background: var(--primary-dark);
     margin-top: 40px;
     font-size: 0.8em;
   }
   
   .heart {
-    color: #ff688c;
+    color: var(--primary-pink);
     display: inline-block;
     animation: pulse 0.9s ease infinite;
   }
@@ -440,7 +451,6 @@
     top: 0;
     left: 0;
     z-index: -1;
-    pointer-events: none;
   }
   
   /* Media Queries */
@@ -479,21 +489,6 @@
     .container {
       width: 95%;
       margin: 80px auto 20px;
-    }
-  
-    .arrow-button {
-      width: 40px;
-      height: 40px;
-      display: flex !important; /* Force display regardless of other styles */
-    }
-  
-    #left-arrow { 
-      left: 5px;
-      display: flex !important; /* Force display for left arrow */
-    }
-    #right-arrow { 
-      right: 5px;
-      display: flex !important; /* Force display for right arrow */
     }
   }
   

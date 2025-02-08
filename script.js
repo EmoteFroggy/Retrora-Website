@@ -5,13 +5,14 @@ const CHANNEL_IDS = [
 ];
 const CHANNEL_NAMES = ["Retrora & Co.", "Retrora Live"];
 const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map((id) => "UU" + id.slice(2));
-const CACHE_EXPIRY_MS = 60 * 60 * 1000;
+const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 let currentChannelIndex = 0;
 let currentNewestVideoId;
 let cachedData = {};
 let apiQueryCount = 0;
 
+/* -------------------- Debug Fetch & Caching -------------------- */
 async function debugFetch(url, options) {
   console.debug(`Making API request: ${url}`);
   apiQueryCount++;
@@ -60,30 +61,32 @@ function getLocalCache(key) {
   }
 }
 
+/* -------------------- Video-related Functions -------------------- */
 function isShort(video) {
   if (video.duration && video.duration <= 182) {
-      return true;
+    return true;
   }
-
-  const title = (video.snippet.title || '').toLowerCase();
-  const description = (video.snippet.description || '').toLowerCase();
-
-  return title.includes('#shorts') ||
-         title.includes('#short') ||
-         title.includes('(shorts)') ||
-         title.includes('(short)') ||
-         description.includes('#shorts') ||
-         description.includes('#short');
+  const title = (video.snippet.title || "").toLowerCase();
+  const description = (video.snippet.description || "").toLowerCase();
+  return (
+    title.includes("#shorts") ||
+    title.includes("#short") ||
+    title.includes("(shorts)") ||
+    title.includes("(short)") ||
+    description.includes("#shorts") ||
+    description.includes("#short")
+  );
 }
 
 function generateVideoHTML(video, elementType) {
   const videoId = video.contentDetails.videoId;
-  const thumbnail = video.snippet.thumbnails.maxres?.url || 
-                   video.snippet.thumbnails.high?.url || 
-                   video.snippet.thumbnails.medium.url;
+  const thumbnail =
+    video.snippet.thumbnails.maxres?.url ||
+    video.snippet.thumbnails.high?.url ||
+    video.snippet.thumbnails.medium.url;
   const title = video.snippet.title;
 
-  if (elementType === 'newest') {
+  if (elementType === "newest") {
     return `
       <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="newest-video-link">
         <div class="newest-thumbnail">
@@ -108,70 +111,145 @@ function generateVideoHTML(video, elementType) {
   `;
 }
 
+/**
+ * Makes a batch request for the given playlistIds (typically an array with one playlistId).
+ * Returns an object containing the response text and the boundary string.
+ */
+async function fetchBatchedPlaylistItems(playlistIds) {
+  const boundary = `batch_${Date.now()}`;
+  let body = "";
+  playlistIds.forEach((playlistId) => {
+    // Build a GET sub-request for each playlist.
+    // Note: The URL path must not include the domain.
+    const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
+    body += `--${boundary}\r\n`;
+    body += "Content-Type: application/http\r\n";
+    body += `Content-ID: <${playlistId}>\r\n\r\n`;
+    body += `GET ${urlPath} HTTP/1.1\r\n\r\n`;
+  });
+  body += `--${boundary}--`;
+  
+  const response = await debugFetch("https://www.googleapis.com/batch/youtube/v3", {
+    method: "POST",
+    headers: {
+      "Content-Type": `multipart/mixed; boundary=${boundary}`,
+    },
+    body: body,
+  });
+  const responseText = await response.text();
+  console.debug("Batched playlistItems raw response:", responseText);
+  return { responseText, boundary };
+}
+
+/**
+ * Parses a multipart/mixed batch response.
+ * Splits the response text using the provided boundary, finds the JSON substring between the first "{" and the last "}",
+ * and parses it. Returns an object keyed by each Content-ID.
+ */
+function parseBatchResponse(responseText, boundary) {
+  const results = {};
+  const parts = responseText.split(`--${boundary}`);
+  parts.forEach((part) => {
+    part = part.trim();
+    if (!part || part === "--") return;
+    const headerBodySplit = part.indexOf("\r\n\r\n");
+    if (headerBodySplit === -1) return;
+    const headerSection = part.substring(0, headerBodySplit);
+    let bodyPart = part.substring(headerBodySplit + 4).trim();
+    // Extract Content-ID from the header section.
+    const contentIdMatch = headerSection.match(/Content-ID:\s*<([^>]+)>/i);
+    let contentId = contentIdMatch ? contentIdMatch[1] : null;
+    if (!contentId) return;
+    // Find the JSON substring between the first '{' and the last '}'.
+    const jsonStart = bodyPart.indexOf("{");
+    const jsonEnd = bodyPart.lastIndexOf("}");
+    if (jsonStart === -1 || jsonEnd === -1) return;
+    const jsonText = bodyPart.substring(jsonStart, jsonEnd + 1);
+    try {
+      const json = JSON.parse(jsonText);
+      results[contentId] = json;
+    } catch (error) {
+      console.error("Failed to parse JSON for part with Content-ID:", contentId, error);
+    }
+  });
+  console.debug("Parsed batch results:", results);
+  return results;
+}
+
 async function fetchChannelVideos(playlistId) {
   const cacheKey = getCacheKey("channel", playlistId, "50");
   const cached = getLocalCache(cacheKey);
-
   if (cached) {
-      displayVideos(cached);
-      return;
+    console.debug("Using cached playlist data for", playlistId);
+    displayVideos(cached);
+    return;
   }
 
-  try {
-      const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
-      const playlistResponse = await debugFetch(playlistUrl);
-      const playlistData = await playlistResponse.json();
+  // Use the batched request to fetch playlistItems.
+  const { responseText, boundary } = await fetchBatchedPlaylistItems([playlistId]);
+  const batchResult = parseBatchResponse(responseText, boundary);
 
-      if (playlistData.items && playlistData.items.length > 0) {
-          const videoIds = playlistData.items.map(item => item.contentDetails.videoId).join(',');
-          
-          const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
-          const videoResponse = await debugFetch(videoUrl);
-          const videoData = await videoResponse.json();
-
-          const durationMap = {};
-          videoData.items.forEach(item => {
-              const duration = parseDuration(item.contentDetails.duration);
-              durationMap[item.id] = duration;
-          });
-
-          const videosWithDuration = playlistData.items.map(item => ({
-              ...item,
-              duration: durationMap[item.contentDetails.videoId]
-          }));
-
-          setLocalCache(cacheKey, videosWithDuration);
-          displayVideos(videosWithDuration);
-      } else {
-          document.getElementById("newest-video").innerHTML = "<p>No videos available.</p>";
-          document.getElementById("other-videos").innerHTML = "<p>No videos available.</p>";
+  // Try to locate the playlist data using the exact key; if not, try keys that end with the playlistId.
+  let playlistData = batchResult[playlistId];
+  if (!playlistData) {
+    for (let key in batchResult) {
+      if (key.endsWith(playlistId)) {
+        playlistData = batchResult[key];
+        break;
       }
-  } catch (error) {
-      console.error("Error fetching videos:", error);
-      document.getElementById("newest-video").innerHTML = "<p>Error loading video.</p>";
-      document.getElementById("other-videos").innerHTML = "<p>Error loading videos.</p>";
+    }
+  }
+
+  if (playlistData && playlistData.items && playlistData.items.length > 0) {
+    const videoIds = playlistData.items
+      .map((item) => item.contentDetails.videoId)
+      .join(",");
+    
+    // Fetch video details (non-batched)
+    const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
+    const videoResponse = await debugFetch(videoUrl);
+    const videoData = await videoResponse.json();
+    
+    const durationMap = {};
+    videoData.items.forEach((item) => {
+      const duration = parseDuration(item.contentDetails.duration);
+      durationMap[item.id] = duration;
+    });
+    
+    // Append duration info to each playlist item.
+    const videosWithDuration = playlistData.items.map((item) => ({
+      ...item,
+      duration: durationMap[item.contentDetails.videoId],
+    }));
+    
+    // Cache the full playlist data with durations.
+    setLocalCache(cacheKey, videosWithDuration);
+    displayVideos(videosWithDuration);
+  } else {
+    document.getElementById("newest-video").innerHTML = "<p>No videos available.</p>";
+    document.getElementById("other-videos").innerHTML = "<p>No videos available.</p>";
   }
   console.info(`Total API queries made: ${apiQueryCount}`);
 }
 
 function parseDuration(duration) {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  const hours = parseInt(match[1] || '0');
-  const minutes = parseInt(match[2] || '0');
-  const seconds = parseInt(match[3] || '0');
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
   return hours * 3600 + minutes * 60 + seconds;
 }
 
 function displayVideos(videos) {
   const newestVideoWrapper = document.getElementById("newest-video");
   newestVideoWrapper.innerHTML = '<div class="loading-spinner"></div>';
-
-  const nonShortVideos = videos.filter(video => !isShort(video));
-
+  
+  const nonShortVideos = videos.filter((video) => !isShort(video));
   const newestVideo = nonShortVideos[0];
+  
   if (newestVideo) {
     currentNewestVideoId = newestVideo.contentDetails.videoId;
-    newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, 'newest');
+    newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, "newest");
     
     const videoTitleElem = document.getElementById("video-title");
     videoTitleElem.textContent = newestVideo.snippet.title;
@@ -179,63 +257,54 @@ function displayVideos(videos) {
     newestVideoWrapper.innerHTML = "<p>No regular videos available.</p>";
     document.getElementById("video-title").textContent = "";
   }
-
+  
   const otherVideosContainer = document.getElementById("other-videos");
   otherVideosContainer.innerHTML = '<div class="loading-spinner"></div>';
-
-  let otherVideos = [];
+  
+  const otherVideos = [];
   for (let i = 0; i < nonShortVideos.length && otherVideos.length < 12; i++) {
     if (nonShortVideos[i].contentDetails.videoId !== currentNewestVideoId) {
       otherVideos.push(nonShortVideos[i]);
     }
   }
-
+  
   if (otherVideos.length > 0) {
-      otherVideosContainer.innerHTML = '';
-      otherVideos.forEach(video => {
-          otherVideosContainer.innerHTML += generateVideoHTML(video, 'other');
-      });
+    otherVideosContainer.innerHTML = otherVideos
+      .map((video) => generateVideoHTML(video, "other"))
+      .join("");
   } else {
-      otherVideosContainer.innerHTML = "<p>No additional videos available.</p>";
+    otherVideosContainer.innerHTML = "<p>No additional videos available.</p>";
   }
 }
 
-    function selectChannel(index) {
-      if (index === currentChannelIndex) return;
+/* -------------------- Channel Switching -------------------- */
+function selectChannel(index) {
+  if (index === currentChannelIndex) return;
+  currentChannelIndex = index;
+  
+  document.getElementById("channel-name").textContent =
+    `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
 
-      currentChannelIndex = index;
-      
-      document.getElementById("channel-name").textContent =
-        `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
-
-      const buttons = document.querySelectorAll(".channel-btn");
-      buttons.forEach((btn, btnIndex) => {
-        if (btnIndex === currentChannelIndex) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
-        }
-      });
-
-      // Show loading spinners in the video containers.
-      document.getElementById("newest-video").innerHTML =
-        '<div class="loading-spinner"></div>';
-      document.getElementById("other-videos").innerHTML =
-        '<div class="loading-spinner"></div>';
-
-      // Fetch the videos for the selected channel.
-      const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
-      fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+  const buttons = document.querySelectorAll(".channel-btn");
+  buttons.forEach((btn, btnIndex) => {
+    if (btnIndex === currentChannelIndex) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
     }
+  });
 
-    // Attach event listeners to the channel buttons.
-    document.getElementById("channel-btn-0").addEventListener("click", () => {
-      selectChannel(0);
-    });
-    document.getElementById("channel-btn-1").addEventListener("click", () => {
-      selectChannel(1);
-    });
+  // Show loading spinners.
+  document.getElementById("newest-video").innerHTML =
+    '<div class="loading-spinner"></div>';
+  document.getElementById("other-videos").innerHTML =
+    '<div class="loading-spinner"></div>';
 
+  const playlistId = UPLOADS_PLAYLIST_IDS[currentChannelIndex];
+  fetchChannelVideos(playlistId);
+}
+
+/* -------------------- NebulaParticles Class -------------------- */
 class NebulaParticles {
   constructor() {
     this.initScene();
@@ -246,7 +315,6 @@ class NebulaParticles {
 
   initScene() {
     this.scene = new THREE.Scene();
-
     this.camera = new THREE.OrthographicCamera(
       window.innerWidth / -2,
       window.innerWidth / 2,
@@ -256,7 +324,6 @@ class NebulaParticles {
       1000
     );
     this.camera.position.z = 50;
-
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
@@ -275,20 +342,22 @@ class NebulaParticles {
 
     const baseColor = new THREE.Color(0xFF688C);
     const depthRange = 5;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * window.innerWidth * 2;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * window.innerHeight * 2;
-      positions[i * 3 + 2] = -Math.random() * depthRange;
+      const i3 = i * 3;
+      positions[i3] = (Math.random() - 0.5) * width * 2;
+      positions[i3 + 1] = (Math.random() - 0.5) * height * 2;
+      positions[i3 + 2] = -Math.random() * depthRange;
 
-      const color = baseColor.clone();
-      color.offsetHSL(0, 0, (Math.random() - 0.5) * 0.1);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      const rand = (Math.random() - 0.5) * 0.1;
+      colors[i3] = baseColor.r + rand;
+      colors[i3 + 1] = baseColor.g + rand;
+      colors[i3 + 2] = baseColor.b + rand;
 
       sizes[i] = 2.0 + Math.random() * 3.0;
-      opacity[i] = 1.0 + Math.random() * 2.0;
+      opacity[i] = 2.0;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -339,35 +408,29 @@ class NebulaParticles {
 
   animate() {
     const clock = new THREE.Clock();
-
     const animateFrame = () => {
       requestAnimationFrame(animateFrame);
-
       if (!this.particles) return;
-
       const time = clock.getElapsedTime();
-      const attributes = this.particles.geometry.attributes;
-      const positions = attributes.position.array;
-      const sizes = attributes.size.array;
-      const opacity = attributes.opacity.array;
+      const { position, size } = this.particles.geometry.attributes;
+      const positions = position.array;
+      const sizes = size.array;
+      const t05 = time * 0.5;
+      const t06 = time * 0.6;
+      const t04 = time * 0.4;
+      const t2 = time * 2;
 
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i] += Math.sin(time * 0.5 + i) * 0.04;
-        positions[i + 1] += Math.cos(time * 0.6 + i) * 0.02;
-        positions[i + 2] += Math.sin(time * 0.4 + i) * 0.02;
-
-        sizes[i / 3] = 0.1 + Math.sin(time * 2 + i) * 0.8;
-        opacity[i / 3] = 2.0;
+      for (let i = 0, j = 0; i < positions.length; i += 3, j++) {
+        positions[i] += Math.sin(t05 + i) * 0.04;
+        positions[i + 1] += Math.cos(t06 + i) * 0.02;
+        positions[i + 2] += Math.sin(t04 + i) * 0.02;
+        sizes[j] = 0.1 + Math.sin(t2 + i) * 0.8;
       }
 
-
-      this.particles.geometry.attributes.position.needsUpdate = true;
-      this.particles.geometry.attributes.size.needsUpdate = true;
-      this.particles.geometry.attributes.opacity.needsUpdate = true;
-
+      position.needsUpdate = true;
+      size.needsUpdate = true;
       this.renderer.render(this.scene, this.camera);
     };
-
     animateFrame();
   }
 
@@ -383,43 +446,41 @@ class NebulaParticles {
   }
 }
 
-if (typeof THREE !== "undefined") {
-  document.addEventListener("DOMContentLoaded", () => new NebulaParticles());
-} else {
-  console.error("Three.js not loaded!");
-}
-
+/* -------------------- Initialization -------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // Set the header text to reflect the default channel (index 0)
+  // Initialize NebulaParticles.
+  if (typeof THREE !== "undefined") {
+    new NebulaParticles();
+  } else {
+    console.error("Three.js not loaded!");
+  }
+
+  // Set default channel header and load videos.
   document.getElementById("channel-name").textContent =
     `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
-
-  // Load the default channel videos
   fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
-});
 
-const heartEl = document.getElementById("heart");
-  // URL for the alternative image.
-  const altImageURL = "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";
-  
-  // Track toggle state
+  // Attach event listeners to channel buttons.
+  document.getElementById("channel-btn-0").addEventListener("click", () => {
+    selectChannel(0);
+  });
+  document.getElementById("channel-btn-1").addEventListener("click", () => {
+    selectChannel(1);
+  });
+
+  // Set up the heart easter egg.
+  const heartEl = document.getElementById("heart");
+  const altImageURL =
+    "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";
   let isHeart = true;
-  
   heartEl.addEventListener("click", () => {
     if (isHeart) {
-      // Replace heart with an image
       heartEl.innerHTML = `<img src="${altImageURL}" alt="smiley" style="height: 1em; vertical-align: middle;">`;
-      // Optionally pause the pulse animation
       heartEl.classList.remove("heart");
     } else {
-      // Restore the heart, and reapply the class for the pulse
       heartEl.innerHTML = "❤";
       heartEl.classList.add("heart");
     }
     isHeart = !isHeart;
   });
-
-// Initial load
-// Initial load
-fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
-
+});
