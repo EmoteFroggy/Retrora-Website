@@ -4,12 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Retrora & Co.</title>
-    <style>
-      body {
-        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' x='0px' y='0px' width='24' height='24' viewBox='0 0 48 48' style='fill:%23ff688c;'%3E%3Cpath d='M35.654,24.09L13.524,3.404c-0.437-0.407-1.074-0.517-1.622-0.28C11.354,3.362,11,3.902,11,4.5v30 c0,0.577,0.331,1.103,0.851,1.352c0.519,0.251,1.137,0.18,1.587-0.181l6.112-4.892l5.777,13.306c0.33,0.76,1.214,1.109,1.973,0.778l4.586-1.992c0.76-0.33,1.108-1.213,0.778-1.973l-3.044-7.011l-2.733-6.294l7.914-0.915c0.581-0.067,1.07-0.466,1.253-1.021 C36.237,25.1,36.081,24.49,35.654,24.09z'%3E%3C/path%3E%3C/svg%3E"),
-          auto;
-      }
-    </style>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -20,15 +14,13 @@
 
   <body>
     <header>
-      <div class="header-text">
-        <p>RETRORA & CO.</p>
-      </div>
+      <p class="header-text">RETRORA & CO.</p>
       <div class="social-links">
         <a
           href="https://www.twitch.tv/Retrora/"
           target="_blank"
           class="social-button"
-          title="Twitch"
+          aria-label="Twitch"
         >
           <i class="fab fa-twitch fa-lg"></i>
         </a>
@@ -36,7 +28,7 @@
           href="https://www.youtube.com/@RetroraAndCo"
           target="_blank"
           class="social-button"
-          title="Retrora & Co."
+          aria-label="Retrora & Co."
         >
           <i class="fab fa-youtube fa-lg"></i>
         </a>
@@ -44,7 +36,7 @@
           href="https://www.youtube.com/@RetroraLIVE"
           target="_blank"
           class="social-button"
-          title="Live Channel"
+          aria-label="Live Channel"
         >
           <i class="fas fa-video fa-lg"></i>
         </a>
@@ -52,7 +44,7 @@
           href="https://twitter.com/Retrora"
           target="_blank"
           class="social-button"
-          title="Twitter"
+          aria-label="Twitter"
         >
           <i class="fab fa-twitter fa-lg"></i>
         </a>
@@ -60,7 +52,7 @@
           href="https://www.instagram.com/retrora.co"
           target="_blank"
           class="social-button"
-          title="Instagram"
+          aria-label="Instagram"
         >
           <i class="fab fa-instagram fa-lg"></i>
         </a>
@@ -68,7 +60,7 @@
           href="https://discord.com/invite/Retrora"
           target="_blank"
           class="social-button"
-          title="Discord"
+          aria-label="Discord"
         >
           <i class="fab fa-discord fa-lg"></i>
         </a>
@@ -76,7 +68,7 @@
           href="https://www.patreon.com/Retrora"
           target="_blank"
           class="social-button"
-          title="Patreon"
+          aria-label="Patreon"
         >
           <i class="fab fa-patreon fa-lg"></i>
         </a>
@@ -84,7 +76,7 @@
           href="https://www.tiktok.com/@retrora?"
           target="_blank"
           class="social-button"
-          title="TikTok"
+          aria-label="TikTok"
         >
           <i class="fab fa-tiktok fa-lg"></i>
         </a>
@@ -92,7 +84,7 @@
           href="https://steamcommunity.com/groups/Retrora"
           target="_blank"
           class="social-button"
-          title="Steam Community"
+          aria-label="Steam Community"
         >
           <i class="fab fa-steam fa-lg"></i>
         </a>
@@ -100,7 +92,7 @@
           href="https://bsky.app/profile/retrora.bsky.social"
           target="_blank"
           class="social-button bluesky"
-          title="Bluesky"
+          aria-label="Bluesky"
         >
           <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <title>Bluesky</title>
@@ -130,41 +122,45 @@
       </g>
     </svg>
 
-<div class="container">
-  <section class="newest-video">
-    <div class="channel-buttons">
-      <button id="channel-btn-0" class="channel-btn active">
-        Retrora &amp; Co.
-      </button>
-      <button id="channel-btn-1" class="channel-btn">
-        Retrora Live
-      </button>
-    </div>
-    
-    <h2 id="channel-name">NEWEST VIDEO FROM RETRORA &amp; CO.</h2>
-  <p id="video-title"></p>
-    <div class="video-player-container">
-      <div class="video-wrapper" id="newest-video">
-      </div>
-    </div>
-  </section>
+    <div class="container">
+      <section class="newest-video">
+        <div class="channel-buttons">
+          <button id="channel-btn-0" class="channel-btn active">
+            Retrora &amp; Co.
+          </button>
+          <button id="channel-btn-1" class="channel-btn">
+            Retrora Live
+          </button>
+        </div>
+        <h2 id="channel-name">NEWEST VIDEO FROM RETRORA &amp; CO.</h2>
+        <p id="video-title"></p>
+        <div class="video-player-container">
+          <div class="video-wrapper" id="newest-video"></div>
+        </div>
+      </section>
 
-  <img class="thumbs-down" src="https://gachi.gay/O4-Cp"/>
-  <img class="ret-waving" src="https://gachi.gay/Jzt8i"/>
+      <img
+        class="thumbs-down"
+        src="https://gachi.gay/O4-Cp"
+        loading="lazy"
+      />
+      <img
+        class="ret-waving"
+        src="https://gachi.gay/Jzt8i"
+        loading="lazy"
+      />
 
-  <section class="other-videos">
-    <h2>OTHER VIDEOS</h2>
-    <div class="video-list" id="other-videos">
+      <section class="other-videos">
+        <h2>OTHER VIDEOS</h2>
+        <div class="video-list" id="other-videos"></div>
+      </section>
     </div>
-  </section>
-</div>
-
 
     <footer class="site-footer">
       <div class="footer-content">
-          <p>Made with <span id="heart" class="heart">❤</span> by EmoteFroggy</p>
+        <p>Made with <span id="heart" class="heart">❤</span> by EmoteFroggy</p>
       </div>
-  </footer>
+    </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
