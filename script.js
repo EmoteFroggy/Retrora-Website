@@ -446,6 +446,38 @@ class NebulaParticles {
   }
 }
 
+// Add to existing code
+async function trackPageView() {
+  try {
+    // Get client info
+    const ip = await fetch('http://ip-api.com/json/')
+      .then(res => res.json())
+      .then(data => data.query);
+    
+    // Anonymize data
+    const ipHash = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(ip)
+    ).then(hash => Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))).join('');
+
+    // Send to server
+    await fetch('https://emotefroggy.github.io/Retrora-Website/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: window.location.pathname,
+        referrer: document.referrer,
+        screenWidth: window.innerWidth,
+        userAgent: navigator.userAgent,
+        ipHash: ipHash
+      })
+    });
+  } catch (error) {
+    console.log('Tracking error:', error);
+  }
+}
+
 /* -------------------- Initialization -------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize NebulaParticles.
