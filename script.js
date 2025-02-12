@@ -110,17 +110,10 @@ function generateVideoHTML(video, elementType) {
     </a>
   `;
 }
-
-/**
- * Makes a batch request for the given playlistIds (typically an array with one playlistId).
- * Returns an object containing the response text and the boundary string.
- */
 async function fetchBatchedPlaylistItems(playlistIds) {
   const boundary = `batch_${Date.now()}`;
   let body = "";
   playlistIds.forEach((playlistId) => {
-    // Build a GET sub-request for each playlist.
-    // Note: The URL path must not include the domain.
     const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
     body += `--${boundary}\r\n`;
     body += "Content-Type: application/http\r\n";
@@ -141,11 +134,6 @@ async function fetchBatchedPlaylistItems(playlistIds) {
   return { responseText, boundary };
 }
 
-/**
- * Parses a multipart/mixed batch response.
- * Splits the response text using the provided boundary, finds the JSON substring between the first "{" and the last "}",
- * and parses it. Returns an object keyed by each Content-ID.
- */
 function parseBatchResponse(responseText, boundary) {
   const results = {};
   const parts = responseText.split(`--${boundary}`);
@@ -156,11 +144,9 @@ function parseBatchResponse(responseText, boundary) {
     if (headerBodySplit === -1) return;
     const headerSection = part.substring(0, headerBodySplit);
     let bodyPart = part.substring(headerBodySplit + 4).trim();
-    // Extract Content-ID from the header section.
     const contentIdMatch = headerSection.match(/Content-ID:\s*<([^>]+)>/i);
     let contentId = contentIdMatch ? contentIdMatch[1] : null;
     if (!contentId) return;
-    // Find the JSON substring between the first '{' and the last '}'.
     const jsonStart = bodyPart.indexOf("{");
     const jsonEnd = bodyPart.lastIndexOf("}");
     if (jsonStart === -1 || jsonEnd === -1) return;
@@ -185,11 +171,9 @@ async function fetchChannelVideos(playlistId) {
     return;
   }
 
-  // Use the batched request to fetch playlistItems.
   const { responseText, boundary } = await fetchBatchedPlaylistItems([playlistId]);
   const batchResult = parseBatchResponse(responseText, boundary);
 
-  // Try to locate the playlist data using the exact key; if not, try keys that end with the playlistId.
   let playlistData = batchResult[playlistId];
   if (!playlistData) {
     for (let key in batchResult) {
@@ -205,7 +189,6 @@ async function fetchChannelVideos(playlistId) {
       .map((item) => item.contentDetails.videoId)
       .join(",");
     
-    // Fetch video details (non-batched)
     const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
     const videoResponse = await debugFetch(videoUrl);
     const videoData = await videoResponse.json();
@@ -216,13 +199,11 @@ async function fetchChannelVideos(playlistId) {
       durationMap[item.id] = duration;
     });
     
-    // Append duration info to each playlist item.
     const videosWithDuration = playlistData.items.map((item) => ({
       ...item,
       duration: durationMap[item.contentDetails.videoId],
     }));
     
-    // Cache the full playlist data with durations.
     setLocalCache(cacheKey, videosWithDuration);
     displayVideos(videosWithDuration);
   } else {
@@ -294,7 +275,6 @@ function selectChannel(index) {
     }
   });
 
-  // Show loading spinners.
   document.getElementById("newest-video").innerHTML =
     '<div class="loading-spinner"></div>';
   document.getElementById("other-videos").innerHTML =
@@ -448,19 +428,16 @@ class NebulaParticles {
 
 /* -------------------- Initialization -------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize NebulaParticles.
   if (typeof THREE !== "undefined") {
     new NebulaParticles();
   } else {
     console.error("Three.js not loaded!");
   }
 
-  // Set default channel header and load videos.
   document.getElementById("channel-name").textContent =
     `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
   fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
 
-  // Attach event listeners to channel buttons.
   document.getElementById("channel-btn-0").addEventListener("click", () => {
     selectChannel(0);
   });
@@ -468,7 +445,6 @@ document.addEventListener("DOMContentLoaded", () => {
     selectChannel(1);
   });
 
-  // Set up the heart easter egg.
   const heartEl = document.getElementById("heart");
   const altImageURL =
     "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";

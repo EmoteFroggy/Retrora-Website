@@ -1,8 +1,6 @@
 /* ==========================================================================
    1. CSS Reset & Base Styles
    ========================================================================== */
-   /* Reset & Base Styles */
-
    :root {
     --primary-pink: #ff688c;
     --primary-dark: #000;
@@ -93,7 +91,7 @@
   
   .social-button i {
     font-size: 1.8em;
-    color: var(--primary-pink); /* Pink by default */
+    color: var(--primary-pink);
     z-index: 2;
   }
   
@@ -107,7 +105,7 @@
   }
   
   .social-button:hover i {
-    color: #ffffff; /* White on hover */
+    color: #ffffff;
     transform: scale(1.2);
   }
   
@@ -127,12 +125,12 @@
   .social-button.bluesky svg {
     width: 50%;
     height: auto;
-    fill: var(--primary-pink); /* Pink by default */
+    fill: var(--primary-pink);
     transition: all 0.4s ease;
   }
   
   .social-button.bluesky:hover svg {
-    fill: #ffffff; /* White on hover */
+    fill: #ffffff;
     transform: scale(1.2);
   }
   
@@ -520,6 +518,3 @@
       height: 120px;
     }
   }
-
-
-  /* From Uiverse.io by wilsondesouza */
