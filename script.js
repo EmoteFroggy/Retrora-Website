@@ -3,7 +3,7 @@ const CHANNEL_IDS = [
   "UC0JqWDXiBBaw7_-aL6DByHw",
   "UCXJyOrMtXJxGwv1x_tH4MYA",
 ];
-const CHANNEL_NAMES = ["Retrora & Co.", "Retrora Live"];
+const CHANNEL_NAMES = ["Retrora", "Retrora Live"];
 const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map((id) => "UU" + id.slice(2));
 const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
