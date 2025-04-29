@@ -114,7 +114,7 @@ async function fetchBatchedPlaylistItems(playlistIds) {
   const boundary = `batch_${Date.now()}`;
   let body = "";
   playlistIds.forEach((playlistId) => {
-    const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50`;
+    const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=100`;
     body += `--${boundary}\r\n`;
     body += "Content-Type: application/http\r\n";
     body += `Content-ID: <${playlistId}>\r\n\r\n`;
@@ -163,7 +163,7 @@ function parseBatchResponse(responseText, boundary) {
 }
 
 async function fetchChannelVideos(playlistId) {
-  const cacheKey = getCacheKey("channel", playlistId, "50");
+  const cacheKey = getCacheKey("channel", playlistId, "100");
   const cached = getLocalCache(cacheKey);
   if (cached) {
     console.debug("Using cached playlist data for", playlistId);
