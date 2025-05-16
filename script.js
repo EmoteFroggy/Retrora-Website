@@ -16,8 +16,8 @@ let apiQueryCount = 0;
 async function debugFetch(url, options) {
   console.debug(`Making API request: ${url}`);
   apiQueryCount++;
-  const response = await fetch(url, options);
   console.debug(`API Query Count: ${apiQueryCount}`);
+  const response = await fetch(url, options);
   return response;
 }
 
@@ -63,19 +63,44 @@ function getLocalCache(key) {
 
 /* -------------------- Video-related Functions -------------------- */
 function isShort(video) {
-  if (video.duration && video.duration <= 182) {
+  // Log video details for debugging
+  console.log(`[Filter] Checking video: "${video.snippet.title}"`);
+  console.log(`[Filter] Duration: ${video.duration} seconds`);
+
+  // STRICT DURATION CHECK: If video is 3 minutes (180 seconds) or shorter, it's a short
+  if (!video.duration || video.duration <= 180) {
+    console.log(`[Filter] Video "${video.snippet.title}" filtered as short due to duration: ${video.duration} seconds`);
     return true;
   }
+
+  // Check for shorts tags
   const title = (video.snippet.title || "").toLowerCase();
   const description = (video.snippet.description || "").toLowerCase();
-  return (
-    title.includes("#shorts") ||
-    title.includes("#short") ||
-    title.includes("(shorts)") ||
-    title.includes("(short)") ||
-    description.includes("#shorts") ||
-    description.includes("#short")
+  
+  const shortsTags = [
+    "#shorts",
+    "#short",
+    "(shorts)",
+    "(short)",
+    "[shorts]",
+    "[short]",
+    "shorts:",
+    "short:",
+    "shorts -",
+    "short -"
+  ];
+  
+  const hasShortsTag = shortsTags.some(tag => 
+    title.includes(tag) || description.includes(tag)
   );
+
+  if (hasShortsTag) {
+    console.log(`[Filter] Video "${video.snippet.title}" filtered as short due to tags in title/description`);
+    return true;
+  }
+
+  console.log(`[Filter] Video "${video.snippet.title}" is not a short (duration: ${video.duration} seconds)`);
+  return false;
 }
 
 function generateVideoHTML(video, elementType) {
@@ -111,59 +136,115 @@ function generateVideoHTML(video, elementType) {
   `;
 }
 async function fetchBatchedPlaylistItems(playlistIds) {
-  const boundary = `batch_${Date.now()}`;
-  let body = "";
-  playlistIds.forEach((playlistId) => {
-    const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=100`;
-    body += `--${boundary}\r\n`;
-    body += "Content-Type: application/http\r\n";
-    body += `Content-ID: <${playlistId}>\r\n\r\n`;
-    body += `GET ${urlPath} HTTP/1.1\r\n\r\n`;
-  });
-  body += `--${boundary}--`;
+  let allResults = [];
+  let nextPageToken = null;
+  let pageCount = 0;
   
-  const response = await debugFetch("https://www.googleapis.com/batch/youtube/v3", {
-    method: "POST",
-    headers: {
-      "Content-Type": `multipart/mixed; boundary=${boundary}`,
-    },
-    body: body,
-  });
-  const responseText = await response.text();
-  console.debug("Batched playlistItems raw response:", responseText);
-  return { responseText, boundary };
+  // Determine max pages based on channel (0 = main channel, 1 = live channel)
+  const isMainChannel = playlistIds[0] === UPLOADS_PLAYLIST_IDS[0];
+  const MAX_PAGES = isMainChannel ? 4 : 1; // 200 videos for main channel, 50 for live channel
+  
+  console.log(`[Stats] Fetching videos for ${isMainChannel ? 'main' : 'live'} channel. Max pages: ${MAX_PAGES}`);
+  
+  do {
+    const boundary = `batch_${Date.now()}`;
+    let body = "";
+    
+    for (const playlistId of playlistIds) {
+      const urlPath = `/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${playlistId}&part=snippet,contentDetails&order=date&maxResults=50${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+      body += `--${boundary}\r\n`;
+      body += "Content-Type: application/http\r\n";
+      body += `Content-ID: <${playlistId}_page${pageCount}>\r\n\r\n`;
+      body += `GET ${urlPath} HTTP/1.1\r\n\r\n`;
+    }
+    body += `--${boundary}--`;
+    
+    console.log(`[Debug] Making request for page ${pageCount + 1}${nextPageToken ? ` with token: ${nextPageToken}` : ''}`);
+    
+    const response = await debugFetch("https://www.googleapis.com/batch/youtube/v3", {
+      method: "POST",
+      headers: {
+        "Content-Type": `multipart/mixed; boundary=${boundary}`,
+      },
+      body: body,
+    });
+    
+    const responseText = await response.text();
+    const batchResult = parseBatchResponse(responseText, boundary);
+    
+    // Process results and get nextPageToken
+    for (const key in batchResult) {
+      if (batchResult[key].items) {
+        allResults = allResults.concat(batchResult[key].items);
+        // Get nextPageToken from the response
+        if (batchResult[key].nextPageToken) {
+          nextPageToken = batchResult[key].nextPageToken;
+          console.log(`[Debug] Found nextPageToken: ${nextPageToken}`);
+        }
+      }
+    }
+    
+    pageCount++;
+    console.log(`[Stats] Fetched page ${pageCount}, total videos so far: ${allResults.length}`);
+    
+  } while (nextPageToken && pageCount < MAX_PAGES);
+  
+  console.log(`[Stats] Total videos fetched for ${playlistIds[0]}: ${allResults.length}`);
+  return { items: allResults };
 }
 
 function parseBatchResponse(responseText, boundary) {
+  if (!responseText || !boundary) {
+    console.error("[Error] Missing responseText or boundary");
+    return {};
+  }
+
   const results = {};
   const parts = responseText.split(`--${boundary}`);
+  
   parts.forEach((part) => {
     part = part.trim();
     if (!part || part === "--") return;
+    
     const headerBodySplit = part.indexOf("\r\n\r\n");
     if (headerBodySplit === -1) return;
+    
     const headerSection = part.substring(0, headerBodySplit);
     let bodyPart = part.substring(headerBodySplit + 4).trim();
+    
     const contentIdMatch = headerSection.match(/Content-ID:\s*<([^>]+)>/i);
     let contentId = contentIdMatch ? contentIdMatch[1] : null;
     if (!contentId) return;
+    
+    // Find the start of the JSON response
     const jsonStart = bodyPart.indexOf("{");
-    const jsonEnd = bodyPart.lastIndexOf("}");
-    if (jsonStart === -1 || jsonEnd === -1) return;
+    if (jsonStart === -1) return;
+    
+    // Find the end of the JSON response
+    let jsonEnd = bodyPart.lastIndexOf("}");
+    if (jsonEnd === -1) return;
+    
+    // Extract just the JSON part
     const jsonText = bodyPart.substring(jsonStart, jsonEnd + 1);
+    
     try {
       const json = JSON.parse(jsonText);
       results[contentId] = json;
     } catch (error) {
-      console.error("Failed to parse JSON for part with Content-ID:", contentId, error);
+      console.error("[Error] Failed to parse JSON for part with Content-ID:", contentId, error);
+      console.error("[Debug] JSON text that failed to parse:", jsonText);
     }
   });
-  console.debug("Parsed batch results:", results);
+  
   return results;
 }
 
 async function fetchChannelVideos(playlistId) {
-  const cacheKey = getCacheKey("channel", playlistId, "100");
+  // Determine if this is the main channel
+  const isMainChannel = playlistId === UPLOADS_PLAYLIST_IDS[0];
+  const maxVideos = isMainChannel ? 200 : 50;
+  const cacheKey = getCacheKey("channel", playlistId, maxVideos.toString());
+  
   const cached = getLocalCache(cacheKey);
   if (cached) {
     console.debug("Using cached playlist data for", playlistId);
@@ -171,73 +252,113 @@ async function fetchChannelVideos(playlistId) {
     return;
   }
 
-  const { responseText, boundary } = await fetchBatchedPlaylistItems([playlistId]);
-  const batchResult = parseBatchResponse(responseText, boundary);
+  try {
+    // Reset API query count at the start of a new fetch
+    apiQueryCount = 0;
+    console.log(`[Stats] Starting new video fetch for ${isMainChannel ? 'main' : 'live'} channel. API Query Count: 0`);
+    
+    const playlistData = await fetchBatchedPlaylistItems([playlistId]);
+    
+    if (!playlistData || !playlistData.items || playlistData.items.length === 0) {
+      console.error("[Error] No playlist data received");
+      document.getElementById("newest-video").innerHTML = "<p>No videos available.</p>";
+      document.getElementById("other-videos").innerHTML = "<p>No videos available.</p>";
+      return;
+    }
 
-  let playlistData = batchResult[playlistId];
-  if (!playlistData) {
-    for (let key in batchResult) {
-      if (key.endsWith(playlistId)) {
-        playlistData = batchResult[key];
-        break;
+    console.log(`[Debug] Fetching durations for ${playlistData.items.length} videos`);
+    
+    // Get all video IDs
+    const videoIds = playlistData.items.map(item => item.contentDetails.videoId);
+    const durationMap = {};
+    
+    // Fetch durations in chunks of 50
+    for (let i = 0; i < videoIds.length; i += 50) {
+      const chunk = videoIds.slice(i, i + 50);
+      const url = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${chunk.join(",")}&part=contentDetails`;
+      
+      console.log(`[Debug] Fetching durations for chunk ${i/50 + 1}`);
+      const response = await debugFetch(url);
+      const data = await response.json();
+      
+      if (data.items) {
+        data.items.forEach(item => {
+          if (item.contentDetails && item.contentDetails.duration) {
+            const duration = parseDuration(item.contentDetails.duration);
+            durationMap[item.id] = duration;
+            console.log(`[Debug] Video ${item.id} duration: ${duration} seconds`);
+          }
+        });
       }
     }
-  }
-
-  if (playlistData && playlistData.items && playlistData.items.length > 0) {
-    const videoIds = playlistData.items
-      .map((item) => item.contentDetails.videoId)
-      .join(",");
     
-    const videoUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=contentDetails`;
-    const videoResponse = await debugFetch(videoUrl);
-    const videoData = await videoResponse.json();
-    
-    const durationMap = {};
-    videoData.items.forEach((item) => {
-      const duration = parseDuration(item.contentDetails.duration);
-      durationMap[item.id] = duration;
+    const videosWithDuration = playlistData.items.map((item) => {
+      const videoId = item.contentDetails.videoId;
+      const duration = durationMap[videoId];
+      console.log(`[Debug] Mapping duration for video ${videoId}: ${duration} seconds`);
+      return {
+        ...item,
+        duration: duration
+      };
     });
-    
-    const videosWithDuration = playlistData.items.map((item) => ({
-      ...item,
-      duration: durationMap[item.contentDetails.videoId],
-    }));
     
     setLocalCache(cacheKey, videosWithDuration);
     displayVideos(videosWithDuration);
-  } else {
-    document.getElementById("newest-video").innerHTML = "<p>No videos available.</p>";
-    document.getElementById("other-videos").innerHTML = "<p>No videos available.</p>";
+    
+    // Log final API query count
+    console.log(`[Stats] Total API Queries Made: ${apiQueryCount}`);
+  } catch (error) {
+    console.error("[Error] Failed to fetch channel videos:", error);
+    document.getElementById("newest-video").innerHTML = "<p>Error loading videos.</p>";
+    document.getElementById("other-videos").innerHTML = "<p>Error loading videos.</p>";
   }
-  console.info(`Total API queries made: ${apiQueryCount}`);
 }
 
 function parseDuration(duration) {
+  if (!duration) {
+    console.error("[Error] No duration provided to parse");
+    return null;
+  }
+  
+  console.log(`[Debug] Parsing duration: ${duration}`);
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) {
+    console.error("[Error] Could not parse duration:", duration);
+    return null;
+  }
+  
   const hours = parseInt(match[1] || "0", 10);
   const minutes = parseInt(match[2] || "0", 10);
   const seconds = parseInt(match[3] || "0", 10);
-  return hours * 3600 + minutes * 60 + seconds;
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  
+  console.log(`[Debug] Parsed duration: ${hours}h ${minutes}m ${seconds}s = ${totalSeconds} seconds`);
+  return totalSeconds;
 }
 
 function displayVideos(videos) {
   const newestVideoWrapper = document.getElementById("newest-video");
   newestVideoWrapper.innerHTML = '<div class="loading-spinner"></div>';
   
-  const nonShortVideos = videos.filter((video) => !isShort(video));
-  const newestVideo = nonShortVideos[0];
+  console.log(`[Stats] Total videos fetched: ${videos.length}`);
   
-  if (newestVideo) {
-    currentNewestVideoId = newestVideo.contentDetails.videoId;
-    newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, "newest");
-    
-    const videoTitleElem = document.getElementById("video-title");
-    videoTitleElem.textContent = newestVideo.snippet.title;
-  } else {
+  // Filter out shorts first
+  const nonShortVideos = videos.filter((video) => !isShort(video));
+  console.log(`[Stats] Videos after removing shorts: ${nonShortVideos.length}`);
+  
+  if (nonShortVideos.length === 0) {
+    console.log("[Stats] No non-short videos found after filtering");
     newestVideoWrapper.innerHTML = "<p>No regular videos available.</p>";
-    document.getElementById("video-title").textContent = "";
+    document.getElementById("other-videos").innerHTML = "<p>No regular videos available.</p>";
+    return;
   }
+  
+  const newestVideo = nonShortVideos[0];
+  currentNewestVideoId = newestVideo.contentDetails.videoId;
+  console.log(`[Stats] Newest video: "${newestVideo.snippet.title}" (${newestVideo.duration} seconds)`);
+  
+  newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, "newest");
+  document.getElementById("video-title").textContent = newestVideo.snippet.title;
   
   const otherVideosContainer = document.getElementById("other-videos");
   otherVideosContainer.innerHTML = '<div class="loading-spinner"></div>';
@@ -246,8 +367,11 @@ function displayVideos(videos) {
   for (let i = 0; i < nonShortVideos.length && otherVideos.length < 12; i++) {
     if (nonShortVideos[i].contentDetails.videoId !== currentNewestVideoId) {
       otherVideos.push(nonShortVideos[i]);
+      console.log(`[Stats] Added to other videos: "${nonShortVideos[i].snippet.title}" (${nonShortVideos[i].duration} seconds)`);
     }
   }
+  
+  console.log(`[Stats] Final number of other videos to display: ${otherVideos.length}`);
   
   if (otherVideos.length > 0) {
     otherVideosContainer.innerHTML = otherVideos
