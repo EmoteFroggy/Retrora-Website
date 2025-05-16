@@ -142,7 +142,7 @@ async function fetchBatchedPlaylistItems(playlistIds) {
   
   // Determine max pages based on channel (0 = main channel, 1 = live channel)
   const isMainChannel = playlistIds[0] === UPLOADS_PLAYLIST_IDS[0];
-  const MAX_PAGES = isMainChannel ? 4 : 1; // 200 videos for main channel, 50 for live channel
+  const MAX_PAGES = isMainChannel ? 2 : 1; // 100 videos for main channel (2 pages), 50 for live channel (1 page)
   
   console.log(`[Stats] Fetching videos for ${isMainChannel ? 'main' : 'live'} channel. Max pages: ${MAX_PAGES}`);
   
@@ -242,7 +242,7 @@ function parseBatchResponse(responseText, boundary) {
 async function fetchChannelVideos(playlistId) {
   // Determine if this is the main channel
   const isMainChannel = playlistId === UPLOADS_PLAYLIST_IDS[0];
-  const maxVideos = isMainChannel ? 200 : 50;
+  const maxVideos = isMainChannel ? 100 : 50; // 100 for main channel, 50 for live channel
   const cacheKey = getCacheKey("channel", playlistId, maxVideos.toString());
   
   const cached = getLocalCache(cacheKey);
