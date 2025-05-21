@@ -201,9 +201,10 @@
   /* Navigation Buttons */
   .channel-buttons {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 15px;
     margin-bottom: 10px;
+    padding-left: 355px;
   }
   
   .channel-btn {
