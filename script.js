@@ -2,8 +2,9 @@ const API_KEY = "AIzaSyBcXm9WGfjjLLNL3N48BjWvMMBeyvtek1c";
 const CHANNEL_IDS = [
   "UC0JqWDXiBBaw7_-aL6DByHw",
   "UCXJyOrMtXJxGwv1x_tH4MYA",
+  "UCiY1MH5m6RJj5E_WurAzB7w",
 ];
-const CHANNEL_NAMES = ["Retrora", "Retrora Live"];
+const CHANNEL_NAMES = ["Retrora", "Retrora Live", "Retrora Clips"];
 const UPLOADS_PLAYLIST_IDS = CHANNEL_IDS.map((id) => "UU" + id.slice(2));
 const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
@@ -567,6 +568,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("channel-btn-1").addEventListener("click", () => {
     selectChannel(1);
+  });
+  document.getElementById("channel-btn-2").addEventListener("click", () => {
+    selectChannel(2);
   });
 
   const heartEl = document.getElementById("heart");
