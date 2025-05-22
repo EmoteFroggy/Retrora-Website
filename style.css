@@ -204,8 +204,12 @@
     justify-content: center;
     gap: 15px;
     margin-bottom: 10px;
-    padding-left: 35px;
-    flex-wrap: wrap;
+    padding-left: 50px;
+    flex-wrap: nowrap;
+    width: 10%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
   }
   
   .channel-btn {
@@ -222,7 +226,9 @@
     transition: all 0.3s ease;
     font-family: 'crosswindsnowind';
     box-shadow: var(--primary-pink) 0 0 5px;
-    min-width: 120px;
+    flex: 1;
+    max-width: 200px;
+    white-space: nowrap;
   }
   
   .channel-btn:hover {
@@ -497,13 +503,13 @@
     }
   
     .channel-buttons {
-      padding: 0 10px;
+      padding-left: 35px;
+      padding-right: 35px;
     }
     
     .channel-btn {
       font-size: 0.9em;
       padding: 10px 15px;
-      min-width: 100px;
     }
   }
   
@@ -532,12 +538,12 @@
     }
   
     .channel-buttons {
-      gap: 10px;
+      padding-left: 35px;
+      padding-right: 35px;
     }
     
     .channel-btn {
       font-size: 0.8em;
       padding: 8px 12px;
-      min-width: 90px;
     }
   }
