@@ -201,10 +201,11 @@
   /* Navigation Buttons */
   .channel-buttons {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 15px;
     margin-bottom: 10px;
-    padding-left: 355px;
+    padding-left: 35px;
+    flex-wrap: wrap;
   }
   
   .channel-btn {
@@ -221,6 +222,7 @@
     transition: all 0.3s ease;
     font-family: 'crosswindsnowind';
     box-shadow: var(--primary-pink) 0 0 5px;
+    min-width: 120px;
   }
   
   .channel-btn:hover {
@@ -493,6 +495,16 @@
       width: 95%;
       margin: 80px auto 20px;
     }
+  
+    .channel-buttons {
+      padding: 0 10px;
+    }
+    
+    .channel-btn {
+      font-size: 0.9em;
+      padding: 10px 15px;
+      min-width: 100px;
+    }
   }
   
   @media (max-width: 600px) {
@@ -517,5 +529,15 @@
   
     .video-card img {
       height: 120px;
+    }
+  
+    .channel-buttons {
+      gap: 10px;
+    }
+    
+    .channel-btn {
+      font-size: 0.8em;
+      padding: 8px 12px;
+      min-width: 90px;
     }
   }
