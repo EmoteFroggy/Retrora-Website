@@ -64,6 +64,11 @@ function getLocalCache(key) {
 
 /* -------------------- Video-related Functions -------------------- */
 function isShort(video) {
+  // Skip filtering for Clips channel
+  if (currentChannelIndex === 2) {
+    return false;
+  }
+
   // Log video details for debugging
   console.log(`[Filter] Checking video: "${video.snippet.title}"`);
   console.log(`[Filter] Duration: ${video.duration} seconds`);
@@ -141,11 +146,11 @@ async function fetchBatchedPlaylistItems(playlistIds) {
   let nextPageToken = null;
   let pageCount = 0;
   
-  // Determine max pages based on channel (0 = main channel, 1 = live channel)
-  const isMainChannel = playlistIds[0] === UPLOADS_PLAYLIST_IDS[0];
-  const MAX_PAGES = isMainChannel ? 2 : 1; // 100 videos for main channel (2 pages), 50 for live channel (1 page)
+  // Determine max pages based on channel index
+  const channelIndex = UPLOADS_PLAYLIST_IDS.indexOf(playlistIds[0]);
+  const MAX_PAGES = channelIndex === 0 ? 2 : 1; // 100 videos for main channel (2 pages), 50 for others (1 page)
   
-  console.log(`[Stats] Fetching videos for ${isMainChannel ? 'main' : 'live'} channel. Max pages: ${MAX_PAGES}`);
+  console.log(`[Stats] Fetching videos for channel index ${channelIndex}. Max pages: ${MAX_PAGES}`);
   
   do {
     const boundary = `batch_${Date.now()}`;
@@ -241,11 +246,14 @@ function parseBatchResponse(responseText, boundary) {
 }
 
 async function fetchChannelVideos(playlistId) {
-  // Determine if this is the main channel
-  const isMainChannel = playlistId === UPLOADS_PLAYLIST_IDS[0];
-  const maxVideos = isMainChannel ? 100 : 50; // 100 for main channel, 50 for live channel
+  // Get channel index and determine max videos
+  const channelIndex = UPLOADS_PLAYLIST_IDS.indexOf(playlistId);
+  const maxVideos = channelIndex === 0 ? 100 : 50; // 100 for main channel, 50 for others
   const cacheKey = getCacheKey("channel", playlistId, maxVideos.toString());
   
+  console.log(`[Debug] Fetching videos for channel ${CHANNEL_NAMES[channelIndex]} (${playlistId})`);
+  
+  // Check cache first
   const cached = getLocalCache(cacheKey);
   if (cached) {
     console.debug("Using cached playlist data for", playlistId);
@@ -256,7 +264,7 @@ async function fetchChannelVideos(playlistId) {
   try {
     // Reset API query count at the start of a new fetch
     apiQueryCount = 0;
-    console.log(`[Stats] Starting new video fetch for ${isMainChannel ? 'main' : 'live'} channel. API Query Count: 0`);
+    console.log(`[Stats] Starting new video fetch for channel ${CHANNEL_NAMES[channelIndex]}. API Query Count: 0`);
     
     const playlistData = await fetchBatchedPlaylistItems([playlistId]);
     
@@ -266,6 +274,12 @@ async function fetchChannelVideos(playlistId) {
       document.getElementById("other-videos").innerHTML = "<p>No videos available.</p>";
       return;
     }
+
+    console.log(`[Debug] Raw playlist data first few items:`, playlistData.items.slice(0, 5).map(item => ({
+      title: item.snippet.title,
+      publishedAt: item.snippet.publishedAt,
+      videoId: item.contentDetails.videoId
+    })));
 
     console.log(`[Debug] Fetching durations for ${playlistData.items.length} videos`);
     
@@ -302,6 +316,12 @@ async function fetchChannelVideos(playlistId) {
         duration: duration
       };
     });
+    
+    console.log(`[Debug] Final videos with duration first few items:`, videosWithDuration.slice(0, 5).map(v => ({
+      title: v.snippet.title,
+      duration: v.duration,
+      publishedAt: v.snippet.publishedAt
+    })));
     
     setLocalCache(cacheKey, videosWithDuration);
     displayVideos(videosWithDuration);
@@ -342,10 +362,20 @@ function displayVideos(videos) {
   newestVideoWrapper.innerHTML = '<div class="loading-spinner"></div>';
   
   console.log(`[Stats] Total videos fetched: ${videos.length}`);
+  console.log("[Debug] First few videos:", videos.slice(0, 5).map(v => ({
+    title: v.snippet.title,
+    duration: v.duration,
+    publishedAt: v.snippet.publishedAt
+  })));
   
   // Filter out shorts first
   const nonShortVideos = videos.filter((video) => !isShort(video));
   console.log(`[Stats] Videos after removing shorts: ${nonShortVideos.length}`);
+  console.log("[Debug] First few non-short videos:", nonShortVideos.slice(0, 5).map(v => ({
+    title: v.snippet.title,
+    duration: v.duration,
+    publishedAt: v.snippet.publishedAt
+  })));
   
   if (nonShortVideos.length === 0) {
     console.log("[Stats] No non-short videos found after filtering");
@@ -357,6 +387,12 @@ function displayVideos(videos) {
   const newestVideo = nonShortVideos[0];
   currentNewestVideoId = newestVideo.contentDetails.videoId;
   console.log(`[Stats] Newest video: "${newestVideo.snippet.title}" (${newestVideo.duration} seconds)`);
+  console.log("[Debug] Newest video details:", {
+    title: newestVideo.snippet.title,
+    duration: newestVideo.duration,
+    publishedAt: newestVideo.snippet.publishedAt,
+    videoId: newestVideo.contentDetails.videoId
+  });
   
   newestVideoWrapper.innerHTML = generateVideoHTML(newestVideo, "newest");
   document.getElementById("video-title").textContent = newestVideo.snippet.title;
