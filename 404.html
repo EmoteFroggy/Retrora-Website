@@ -1,9 +1,14 @@
 <script>
   window.onload = () => {
-    const currentURL = window.location.href;
-    const lowerCaseURL = currentURL.toLowerCase();
-    if (currentURL !== lowerCaseURL) {
-      location.replace(lowerCaseURL);
+    let currentPath = window.location.pathname;
+    let lowerCasePath = currentPath.toLowerCase();
+
+    // Check if the current path is /portfolio or /Portfolio (without a trailing slash)
+    if (lowerCasePath === "/portfolio" || lowerCasePath === "/portfolio/") {
+      window.location.replace("/Portfolio/"); // Redirect to the correct, case-sensitive path with trailing slash
+    } else if (currentPath !== lowerCasePath) {
+      // If it's not the portfolio path but there's a casing issue, redirect to lowercase
+      window.location.replace(lowerCasePath);
     }
   };
 </script>
