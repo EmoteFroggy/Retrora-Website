@@ -126,8 +126,22 @@
 
     <div class="container">
       <section class="portfolio-section">
-        <h2>PORTFOLIO</h2>
-        <div class="portfolio-grid">
+        <div class="portfolio-tabs">
+          <button class="portfolio-tab active" data-tab="portfolio">Portfolio</button>
+          <button class="portfolio-tab" data-tab="resume">Resume</button>
+        </div>
+        
+        <div class="tab-content active" id="portfolio-content">
+          <h2>PORTFOLIO</h2>
+          <div class="portfolio-grid">
+          </div>
+        </div>
+        
+        <div class="tab-content" id="resume-content">
+          <h2>RESUME</h2>
+          <div class="resume-content">
+            <!-- Resume content will go here -->
+          </div>
         </div>
       </section>
     </div>
