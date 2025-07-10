@@ -4,19 +4,21 @@
     <meta charset="UTF-8">
     <title>Redirecting...</title>
     <script>
-        // Get the current path
-        const path = window.location.pathname.toLowerCase();
+        // Prevent infinite loops by checking if we're already on the correct page
+        const path = window.location.pathname;
+        const pathLower = path.toLowerCase();
         
-        // Redirect rules for portfolio variations
-        if (path === '/portfolio' || path === '/portfolio/') {
-            window.location.href = '/Portfolio/';
-        } else {
+        // Only redirect if we're not already on the correct page
+        if ((pathLower === '/portfolio' || pathLower === '/portfolio/') && path !== '/Portfolio/') {
+            window.location.replace('/Portfolio/');
+        } else if (path !== '/' && path !== '/index.html') {
             // For other 404s, redirect to home
-            window.location.href = '/';
+            window.location.replace('/');
         }
     </script>
 </head>
 <body>
     <p>Redirecting...</p>
+    <p>If you're not redirected automatically, <a href="/">click here to go home</a>.</p>
 </body>
 </html> 
