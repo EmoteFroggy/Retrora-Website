@@ -587,6 +587,33 @@ class NebulaParticles {
   }
 }
 
+/* -------------------- Navigation Functions -------------------- */
+function initNavigation() {
+  const navTabs = document.querySelectorAll('.nav-tab');
+  
+  navTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Remove active class from all tabs
+      navTabs.forEach(t => t.classList.remove('active'));
+      
+      // Add active class to clicked tab
+      tab.classList.add('active');
+      
+      // Get the page from data attribute
+      const page = tab.getAttribute('data-page');
+      
+      // Handle navigation
+      if (page === 'portfolio') {
+        window.location.href = 'portfolio.html';
+      } else if (page === 'home') {
+        window.location.href = 'index.html';
+      }
+    });
+  });
+}
+
 /* -------------------- Initialization -------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof THREE !== "undefined") {
@@ -595,32 +622,41 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Three.js not loaded!");
   }
 
-  document.getElementById("channel-name").textContent =
-    `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
-  fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+  // Initialize navigation
+  initNavigation();
 
-  document.getElementById("channel-btn-0").addEventListener("click", () => {
-    selectChannel(0);
-  });
-  document.getElementById("channel-btn-1").addEventListener("click", () => {
-    selectChannel(1);
-  });
-  document.getElementById("channel-btn-2").addEventListener("click", () => {
-    selectChannel(2);
-  });
+  // Initialize video loading (only on home page)
+  const channelName = document.getElementById("channel-name");
+  if (channelName) {
+    channelName.textContent =
+      `NEWEST VIDEO FROM ${CHANNEL_NAMES[currentChannelIndex].toUpperCase()}`;
+    fetchChannelVideos(UPLOADS_PLAYLIST_IDS[currentChannelIndex]);
+
+    document.getElementById("channel-btn-0").addEventListener("click", () => {
+      selectChannel(0);
+    });
+    document.getElementById("channel-btn-1").addEventListener("click", () => {
+      selectChannel(1);
+    });
+    document.getElementById("channel-btn-2").addEventListener("click", () => {
+      selectChannel(2);
+    });
+  }
 
   const heartEl = document.getElementById("heart");
-  const altImageURL =
-    "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";
-  let isHeart = true;
-  heartEl.addEventListener("click", () => {
-    if (isHeart) {
-      heartEl.innerHTML = `<img src="${altImageURL}" alt="smiley" style="height: 1em; vertical-align: middle;">`;
-      heartEl.classList.remove("heart");
-    } else {
-      heartEl.innerHTML = "❤";
-      heartEl.classList.add("heart");
-    }
-    isHeart = !isHeart;
-  });
+  if (heartEl) {
+    const altImageURL =
+      "https://cdn.7tv.app/emote/01GM6WDXE80001P7H3QK4M0CG4/1x.gif";
+    let isHeart = true;
+    heartEl.addEventListener("click", () => {
+      if (isHeart) {
+        heartEl.innerHTML = `<img src="${altImageURL}" alt="smiley" style="height: 1em; vertical-align: middle;">`;
+        heartEl.classList.remove("heart");
+      } else {
+        heartEl.innerHTML = "❤";
+        heartEl.classList.add("heart");
+      }
+      isHeart = !isHeart;
+    });
+  }
 });
