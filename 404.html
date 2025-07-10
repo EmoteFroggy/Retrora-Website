@@ -3,22 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Redirecting...</title>
-    <script>
-        // Prevent infinite loops by checking if we're already on the correct page
-        const path = window.location.pathname;
-        const pathLower = path.toLowerCase();
-        
-        // Only redirect if we're not already on the correct page
-        if ((pathLower === '/portfolio' || pathLower === '/portfolio/') && path !== '/Portfolio/') {
-            window.location.replace('/Portfolio/');
-        } else if (path !== '/' && path !== '/index.html') {
-            // For other 404s, redirect to home
-            window.location.replace('/');
-        }
-    </script>
+    <meta http-equiv="refresh" content="0;url=/Portfolio/">
 </head>
 <body>
-    <p>Redirecting...</p>
-    <p>If you're not redirected automatically, <a href="/">click here to go home</a>.</p>
+    <p>Redirecting to Portfolio...</p>
+    <p>If you're not redirected automatically, <a href="/Portfolio/">click here for Portfolio</a> or <a href="/">click here to go home</a>.</p>
 </body>
 </html> 
