@@ -614,6 +614,32 @@ function initNavigation() {
   });
 }
 
+/* -------------------- Portfolio Tab Functions -------------------- */
+function initPortfolioTabs() {
+  const portfolioTabs = document.querySelectorAll('.portfolio-tab');
+  
+  portfolioTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      portfolioTabs.forEach(t => t.classList.remove('active'));
+      
+      // Add active class to clicked tab
+      tab.classList.add('active');
+      
+      // Hide all tab content
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Show the corresponding tab content
+      const tabName = tab.getAttribute('data-tab');
+      const targetContent = document.getElementById(`${tabName}-content`);
+      if (targetContent) {
+        targetContent.classList.add('active');
+      }
+    });
+  });
+}
+
 /* -------------------- Initialization -------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof THREE !== "undefined") {
@@ -624,6 +650,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize navigation
   initNavigation();
+
+  // Initialize portfolio tabs (if on portfolio page)
+  initPortfolioTabs();
 
   // Initialize video loading (only on home page)
   const channelName = document.getElementById("channel-name");
