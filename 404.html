@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+    <script>
+        // Get the current path
+        const path = window.location.pathname.toLowerCase();
+        
+        // Redirect rules for portfolio variations
+        if (path === '/portfolio' || path === '/portfolio/') {
+            window.location.href = '/Portfolio/';
+        } else {
+            // For other 404s, redirect to home
+            window.location.href = '/';
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html> 
